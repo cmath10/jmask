@@ -1,0 +1,14 @@
+{
+  "name": "@cmath10/jmask",
+  "version": "0.0.1",
+  "description": "Pure JavaScript mask",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "mask"
+  ],
+  "author": "Zaytzev.Kirill@yandex.ru",
+  "license": "MIT"
+}
