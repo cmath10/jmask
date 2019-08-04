@@ -1,0 +1,10 @@
+.idea
+.gitignore
+.npmignore
+app.sh
+docker-compose.yml
+karma.conf.js
+/coverage
+/docker
+/sandbox
+/tests

@@ -10,5 +10,28 @@
     "mask"
   ],
   "author": "Zaytzev.Kirill@yandex.ru",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/core": "^7.5.5",
+    "@babel/preset-env": "^7.5.5",
+    "babel-plugin-istanbul": "^5.2.0",
+    "chai": "^4.2.0",
+    "cli-color": "^1.4.0",
+    "cross-env": "^5.2.0",
+    "karma": "^4.2.0",
+    "karma-chai": "^0.1.0",
+    "karma-chrome-launcher": "^3.0.0",
+    "karma-coverage": "^1.1.2",
+    "karma-mocha": "^1.3.0",
+    "karma-sinon": "^1.0.5",
+    "karma-sourcemap-loader": "^0.3.7",
+    "karma-spec-reporter": "0.0.32",
+    "mocha": "^6.2.0",
+    "puppeteer": "^1.19.0",
+    "sinon": "^7.4.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cmath10/jmask"
+  }
 }
