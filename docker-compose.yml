@@ -1,0 +1,18 @@
+version: "3.2"
+services:
+  node:
+    build:
+      context: ./docker
+    environment:
+      UID: ${uid}
+      GID: ${gid}
+      PORT_NODE: ${port_node}
+      PORT_KARMA: ${port_karma}
+    ports:
+      - "${port_node}:8080"
+      - "${port_karma}:9876"
+    container_name: jmask-env
+    volumes:
+      - type: bind
+        source: .
+        target: /var/www/jmask
