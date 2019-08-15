@@ -1,16 +1,13 @@
+import { translation as defaultTranslation } from './jmask-defaults';
+
 class JMaskRegex {
   /**
    * @param {string} mask
+   * @param {object} [translation]
    */
-  constructor (mask) {
+  constructor (mask, translation) {
     this.mask = mask;
-    this.translation = {
-      '0': {pattern: /\d/},
-      '9': {pattern: /\d/, optional: true},
-      '#': {pattern: /\d/, recursive: true},
-      'A': {pattern: /[a-zA-Z0-9]/},
-      'S': {pattern: /[a-zA-Z]/},
-    };
+    this.translation = translation || defaultTranslation;
   }
 
   /**
