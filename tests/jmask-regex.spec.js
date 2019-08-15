@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import JMaskRegex from '../src/jmask-regex';
 
-describe('jmask-regex.js', () => {
+describe('JMaskRegex', () => {
   it ('Dates', () => {
     const regex = new JMaskRegex('00/00/0000');
 
