@@ -2,7 +2,7 @@
   "name": "@cmath10/jmask",
   "version": "0.0.1",
   "description": "Pure JavaScript mask",
-  "main": "src/jmask-watcher.js",
+  "main": "src/jmask.js",
   "scripts": {
     "lint": "eslint src/** tests/**",
     "lint:fix": "eslint --fix src/** tests/**",
