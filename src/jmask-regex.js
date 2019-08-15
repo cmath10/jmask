@@ -21,7 +21,13 @@ class JMaskRegex {
   }
 
   get regex () {
-    let chunks = [], pattern, optional, recursive, oRecursive, r;
+    const chunks = [];
+
+    let pattern;
+    let optional;
+    let recursive;
+    let recursiveOptions;
+    let regex;
 
     for (let i = 0, translation, char; i < this.length; i++) {
       char = this.char(i);
@@ -35,7 +41,7 @@ class JMaskRegex {
 
         if (recursive) {
           chunks.push(char);
-          oRecursive = {digit: char, pattern};
+          recursiveOptions = {char, pattern};
         } else {
           chunks.push(!optional && !recursive ? pattern : (pattern + '?'));
         }
@@ -45,19 +51,19 @@ class JMaskRegex {
       }
     }
 
-    r = chunks.join('');
+    regex = chunks.join('');
 
-    if (oRecursive) {
-      r = r
-        .replace(new RegExp('(' + oRecursive.digit + '(.*' + oRecursive.digit + ')?)'), '($1)?')
-        .replace(new RegExp(oRecursive.digit, 'g'), oRecursive.pattern);
+    if (recursiveOptions) {
+      regex = regex
+        .replace(new RegExp('(' + recursiveOptions.char + '(.*' + recursiveOptions.char + ')?)'), '($1)?')
+        .replace(new RegExp(recursiveOptions.char, 'g'), recursiveOptions.pattern);
     }
 
-    return new RegExp(r);
+    return new RegExp(regex);
   }
 
   get length () {
-    return this.mask.length
+    return this.mask.length;
   }
 
   /**
@@ -69,4 +75,4 @@ class JMaskRegex {
   }
 }
 
-export default JMaskRegex
+export default JMaskRegex;
