@@ -5,45 +5,11 @@ process.env.CHROME_BIN = puppeteer.executablePath();
 
 module.exports = function (config) {
   config.set({
-    basePath: __dirname,
-
-    port: 9876,
-
-    colors: true,
-
-    logLevel: config.LOG_INFO,
-
     autoWatch: false,
-
+    basePath: __dirname,
     browsers: [],
-
-    frameworks: ['chai', 'mocha', 'parcel', 'sinon'],
-
-    reporters: ['spec', 'coverage'],
-
-    files: [
-      'tests/**/*.spec.js',
-      'tests/**/*.e2e.js',
-    ],
-
-    exclude: [],
-
-    preprocessors: {
-      'tests/**/*.spec.js': ['parcel', 'sourcemap'],
-      'tests/**/*.e2e.js': ['parcel', 'sourcemap'],
-    },
-
-    plugins: [
-      'karma-coverage',
-      'karma-chai',
-      'karma-chrome-launcher',
-      'karma-mocha',
-      'karma-parcel',
-      'karma-sinon',
-      'karma-sourcemap-loader',
-      'karma-spec-reporter',
-    ],
-
+    colors: true,
+    concurrency: Infinity,
     coverageReporter: {
       dir: path.resolve(__dirname, 'coverage'),
       reporters: [
@@ -51,11 +17,6 @@ module.exports = function (config) {
         {type: 'text-summary'}
       ],
     },
-
-    singleRun: true,
-
-    concurrency: Infinity,
-
     customLaunchers: {
       ChromeWithoutSandbox: {
         base: 'ChromeHeadless',
@@ -64,6 +25,64 @@ module.exports = function (config) {
           '--disable-setuid-sandbox',
         ]
       }
-    }
+    },
+    exclude: [],
+    files: [
+      'tests/**/*.spec.js',
+      'tests/**/*.e2e.js',
+    ],
+    frameworks: ['chai', 'mocha', 'sinon'],
+    logLevel: config.LOG_INFO,
+    plugins: [
+      'karma-chai',
+      'karma-chrome-launcher',
+      'karma-coverage',
+      'karma-mocha',
+      'karma-sinon',
+      'karma-sourcemap-loader',
+      'karma-spec-reporter',
+      'karma-webpack',
+    ],
+    port: 9876,
+    preprocessors: {
+      'tests/**/*.spec.js': ['webpack', 'sourcemap'],
+      'tests/**/*.e2e.js': ['webpack', 'sourcemap'],
+    },
+    reporters: ['spec', 'coverage'],
+    singleRun: true,
+    webpack: {
+      mode: 'development',
+      devtool: 'inline-source-map',
+      entry: {
+        'core-js': [
+          'core-js/es/array',
+          'core-js/es/object',
+          'core-js/es/promise',
+        ],
+      },
+      module: {
+        rules: [{
+          test: /\.js$/,
+          exclude: /node_modules/,
+          use: [{
+            loader: 'babel-loader',
+            options: {
+              presets: ['@babel/preset-env'],
+              cacheDirectory: true,
+              sourceMaps: true,
+            },
+          }],
+        }],
+      },
+      resolve: {
+        alias: {
+          src: path.resolve(__dirname, 'src'),
+          vue$: 'vue/dist/vue.esm.js',
+        },
+      },
+    },
+    webpackMiddleware: {
+      noInfo: true,
+    },
   });
 };
