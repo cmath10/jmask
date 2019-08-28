@@ -11,9 +11,10 @@ module.exports = {
     sourceType: 'module',
   },
   rules: {
-    'comma-dangle': ['error', 'only-multiline'],
+    'comma-dangle': ['error', 'always-multiline'],
     'no-empty': 'off',
+    'no-useless-escape': 'off',
     semi: ['error', 'always'],
-    quotes: ['error', 'single']
+    quotes: ['error', 'single'],
   },
 };
