@@ -71,4 +71,16 @@ describe ('JMaskParser', () => {
       expect(info.map, 'Correct char positions').to.be.deep.equal({1: 1});
     });
   });
+
+  describe ('Phones: +7-000-000-00-00', () => {
+    const parser = new JMaskParser('+7-000-000-00-00');
+
+    it ('905', () => {
+      const info = parser.parse('905');
+
+      expect(info.buffer.toString()).to.be.string('+7-905');
+      expect(info.invalid.length, 'No invalid chars').to.be.equal(0);
+      expect(info.map, 'Correct char positions').to.be.deep.equal({0: 1, 1: 1, 2: 1});
+    });
+  });
 });
