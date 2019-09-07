@@ -1,13 +1,13 @@
-import { translation as defaultTranslation } from './jmask-defaults';
+import { translations as defaultTranslations } from './jmask-defaults';
 
 class JMaskRegex {
   /**
    * @param {string} mask
-   * @param {object} [translation]
+   * @param {object} [translations]
    */
-  constructor (mask, translation) {
+  constructor (mask, translations) {
     this.mask = mask;
-    this.translation = translation || defaultTranslation;
+    this.translations = translations || defaultTranslations;
   }
 
   /**
@@ -28,7 +28,7 @@ class JMaskRegex {
 
     for (let i = 0, translation, char; i < this.length; i++) {
       char = this.char(i);
-      translation = this.translation[char];
+      translation = this.translations[char];
 
       if (translation) {
 

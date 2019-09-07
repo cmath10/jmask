@@ -1,4 +1,4 @@
-import { translation as defaultTranslation } from './jmask-defaults';
+import { translations as defaultTranslations } from './jmask-defaults';
 
 class JMaskBuffer {
   constructor (reverse) {
@@ -84,7 +84,7 @@ class JmaskParser {
 
     this.mask = mask;
     this.reverse = options.reverse || false;
-    this.translation = options.translation || defaultTranslation;
+    this.translations = options.translations || defaultTranslations;
 
     this.invalid = [];
   }
@@ -108,7 +108,7 @@ class JmaskParser {
     let lastUntranslated = undefined;
 
     while (!m.finished && !v.finished) {
-      let translation = this.translation[m.char];
+      let translation = this.translations[m.char];
 
       if (translation) {
         if (v.char.match(translation.pattern)) {
@@ -165,7 +165,7 @@ class JmaskParser {
 
     const lastMaskChar = this.mask.charAt(m.last);
 
-    if (this.mask.length === value.length + 1 && !this.translation[lastMaskChar]) {
+    if (this.mask.length === value.length + 1 && !this.translations[lastMaskChar]) {
       buffer.push(lastMaskChar);
     }
 
