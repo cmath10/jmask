@@ -170,9 +170,9 @@ class JmaskParser {
     }
 
     return {
-      buffer,
-      invalid,
+      value: buffer.toString(),
       map: this.mapCharPositions(value, buffer, charPositions),
+      invalid,
     };
   }
 

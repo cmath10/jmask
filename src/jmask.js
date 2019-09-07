@@ -129,12 +129,12 @@ class Jmask {
    * @returns {string}
    */
   getMasked (skipMaskChars) {
-    const {buffer, map, invalid} = this.parser.parse(this.value, skipMaskChars);
+    const {value, map, invalid} = this.parser.parse(this.value, skipMaskChars);
 
     this.invalid = invalid;
     this.maskCharPositionMap = map;
 
-    return buffer.toString();
+    return value;
   }
 
   onBlur () {
@@ -272,12 +272,16 @@ class Jmask {
   }
 
   destroy () {
-    this.value = this.getClean();
     this.el.removeEventListener('blur', this.handlers.blur);
     this.el.removeEventListener('change', this.handlers.change);
     this.el.removeEventListener('focusout', this.handlers.focusout);
     this.el.removeEventListener('keydown', this.handlers.keydown);
     this.el.removeEventListener(this.inputEventName, this.handlers.input);
+
+    const caret = this.caret;
+
+    this.value = this.getClean();
+    this.caret = caret;
   }
 }
 
