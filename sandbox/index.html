@@ -3,18 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <title>JMask Sandbox</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        label {
+            display: inline-block;
+            margin-bottom: .5rem;
+        }
+
+        .container {
+            display: block;
+            max-width: 768px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .mb {
+            margin-bottom: 1rem;
+        }
+    </style>
 </head>
 <body>
-    <h1>JMask Sandbox</h1>
+    <div class="container">
+        <h1>JMask Sandbox</h1>
 
-    <div>
-        <label for="money">Money</label>
-        <input id="money" type="text">
-    </div>
+        <div class="mb">
+            <label for="date">Date</label>
+            <div>
+                <input id="date" type="text" placeholder="01/01/1970">
+            </div>
+        </div>
 
-    <div>
-        <label for="phone">Phone</label>
-        <input id="phone" type="text">
+        <div class="mb">
+            <label for="date-clear">Date (clear)</label>
+            <div>
+                <input id="date-clear" type="text">
+            </div>
+        </div>
+
+        <div class="mb">
+            <label for="date-fallback">Date (fallback)</label>
+            <div>
+                <input id="date-fallback" type="text">
+            </div>
+        </div>
+
+        <div class="mb">
+            <label for="ip">IP address</label>
+            <div>
+                <input id="ip" type="text">
+            </div>
+        </div>
+
+        <div class="mb">
+            <label for="money">Money</label>
+            <div>
+                <input id="money" type="text">
+            </div>
+        </div>
+
+        <div class="mb">
+            <label for="percent">Percent</label>
+            <div>
+                <input id="percent" type="text">
+            </div>
+        </div>
+
+        <div class="mb">
+            <label for="phone">Phone</label>
+            <div>
+                <input id="phone" type="text">
+            </div>
+        </div>
+
+        <div class="mb">
+            <label for="time">Time</label>
+            <div>
+                <input id="time" type="text">
+            </div>
+        </div>
     </div>
 
     <script type="text/javascript" src="build/index.js"></script>
