@@ -38,12 +38,12 @@ describe ('JMaskParser', () => {
   });
 
   describe ('Money: #.##0,00', () => {
-    const parser = new JMaskParser('#.##0,00');
+    const parser = new JMaskParser('#.##0,00', {reverse: true});
 
     it ('000', () => {
       const info = parser.parse('000');
 
-      expect(info.buffer.toString()).to.be.string('0.00');
+      expect(info.buffer.toString()).to.be.string('0,00');
       expect(info.invalid.length, 'No invalid chars').to.be.equal(0);
       expect(info.map, 'Correct char positions').to.be.deep.equal({1: 1});
     });
@@ -51,15 +51,7 @@ describe ('JMaskParser', () => {
     it ('0.00', () => {
       const info = parser.parse('0.00');
 
-      expect(info.buffer.toString()).to.be.string('0.00');
-      expect(info.invalid.length, 'No invalid chars').to.be.equal(0);
-      expect(info.map, 'Correct char positions').to.be.deep.equal({1: 1});
-    });
-
-    it ('0,00', () => {
-      const info = parser.parse('0,00');
-
-      expect(info.buffer.toString()).to.be.string('0.00');
+      expect(info.buffer.toString()).to.be.string('0,00');
       expect(info.invalid.length, '1 invalid char').to.be.equal(1);
       expect(info.invalid[0], 'Correct keys').to.have.keys([
         'position',
@@ -67,8 +59,24 @@ describe ('JMaskParser', () => {
         'pattern',
       ]);
       expect(info.invalid[0].position, 'Correct position of invalid char').to.be.equal(1);
-      expect(info.invalid[0].char, 'Correct value of invalid char').to.be.string(',');
+      expect(info.invalid[0].char, 'Correct value of invalid char').to.be.string('.');
       expect(info.map, 'Correct char positions').to.be.deep.equal({1: 1});
+    });
+
+    it ('0,00', () => {
+      const info = parser.parse('0,00');
+
+      expect(info.buffer.toString()).to.be.string('0,00');
+      expect(info.invalid.length, 'No invalid chars').to.be.equal(0);
+      expect(info.map, 'Correct char positions').to.be.deep.equal({1: 1});
+    });
+
+    it ('99999999,00', () => {
+      const info = parser.parse('99999999,00');
+
+      expect(info.buffer.toString()).to.be.string('99.999.999,00');
+      expect(info.invalid.length, 'No invalid chars').to.be.equal(0);
+      expect(info.map, 'Correct char positions').to.be.deep.equal({4: 1, 6: 1, 10: 1});
     });
   });
 
