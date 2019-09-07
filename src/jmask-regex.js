@@ -7,7 +7,7 @@ class JMaskRegex {
    */
   constructor (mask, translations) {
     this.mask = mask;
-    this.translations = translations || defaultTranslations;
+    this.translations = Object.assign({}, translations || {}, defaultTranslations);
   }
 
   /**

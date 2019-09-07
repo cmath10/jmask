@@ -84,7 +84,7 @@ class JmaskParser {
 
     this.mask = mask;
     this.reverse = options.reverse || false;
-    this.translations = options.translations || defaultTranslations;
+    this.translations = Object.assign({}, options.translations || {}, defaultTranslations);
 
     this.invalid = [];
   }

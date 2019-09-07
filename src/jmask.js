@@ -18,8 +18,7 @@ class Jmask {
     this.mask = mask;
     this.options = options;
     this.clearIfNotMatch = options.clearIfNotMatch || false;
-    this.reverse = options.reverse || false;
-    this.translations = options.translations || DEFAULTS.translations;
+    this.translations = Object.assign({}, options.translations || {}, DEFAULTS.translations);
     this.keysExcluded = options.keysExcluded || DEFAULTS.keysExcluded;
 
     this.oldValue = '';
@@ -31,7 +30,7 @@ class Jmask {
     this.keyCode = undefined;
     this.maskPreviousValue = '';
     this.parser = new JmaskParser(mask, {
-      reverse: this.reverse,
+      reverse: options.reverse || false,
       translations: this.translations,
     });
     this.regex = new JMaskRegex(mask, options.translations);
