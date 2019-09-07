@@ -2,6 +2,22 @@ import JMask from '../src/jmask';
 
 (() => {
   const masks = [
+    {
+      id: 'cep',
+      mask: '00000-000',
+      options: {
+        onComplete (value) {
+          alert('CEP Completed!: ' + value);
+        },
+        onChange (value) {
+          console.log('CEP changed!: ', value);
+        },
+        onInvalid (value, event, el, invalid) {
+          const error = invalid[0];
+          console.log('Digit: ', error.char, ' is invalid for the position: ', error.position, '. We expect something like: ', error.pattern);
+        },
+      },
+    },
     {id: 'date', mask: '00/00/0000'},
     {id: 'date-clear', mask: '00/00/0000', options: {clearIfNotMatch: true}},
     {
