@@ -25,8 +25,8 @@ class Jmask {
     this.caretPosition = 0;
     this.changed = false;
     this.invalid = [];
-    this.maskCharPositionMap = {};
-    this.maskCharPositionMapOld = {};
+    this.maskCharPositionMap = [];
+    this.maskCharPositionMapOld = [];
     this.keyCode = undefined;
     this.maskPreviousValue = '';
     this.parser = new JmaskParser(mask, {
@@ -73,10 +73,10 @@ class Jmask {
     }
 
     if (position <= positionOld && positionOld !== oldValue.length) {
-      if (!this.maskCharPositionMapOld[position]) {
+      if (!this.maskCharPositionMapOld.includes(position)) {
         const calculated = position + delta - before;
 
-        if (!this.maskCharPositionMap[calculated]) {
+        if (!this.maskCharPositionMap.includes(calculated)) {
           return calculated;
         }
       }
@@ -95,7 +95,7 @@ class Jmask {
     let count = 0;
 
     for (let i = position - 1; i >= 0; i--) {
-      if (!this.maskCharPositionMap[i]) {
+      if (!this.maskCharPositionMap.includes(i)) {
         break;
       }
 
@@ -106,22 +106,14 @@ class Jmask {
   }
 
   maskCharsBeforeCaretAll (position) {
-    let count = 0;
-
-    for (let i = position - 1; i >= 0; i--) {
-      if (this.maskCharPositionMap[i]) {
-        count++;
-      }
-    }
-
-    return count;
+    return this.maskCharPositionMap.filter(p => p < position).length;
   }
 
   maskCharsAfterCaret (value, position) {
     let count = 0;
 
     for (let i = position; i < value.length; i++) {
-      if (!this.maskCharPositionMap[i]) {
+      if (!this.maskCharPositionMap.includes(i)) {
         break;
       }
 
@@ -199,7 +191,7 @@ class Jmask {
    * @param {KeyboardEvent} event
    */
   onKeydown (event) {
-    const keyCode = event.keyCode || event.which;
+    const keyCode = event.key || event.keyCode || event.which;
 
     this.keyCode = keyCode.toString();
     this.maskPreviousValue = this.value;

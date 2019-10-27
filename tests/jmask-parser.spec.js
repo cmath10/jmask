@@ -10,7 +10,7 @@ describe ('JMaskParser', () => {
 
       expect(info.value).to.be.string('22/0');
       expect(info.invalid.length, 'No invalid chars').to.be.equal(0);
-      expect(info.map, 'Correct char positions').to.be.deep.equal({2: 1});
+      expect(info.map, 'Correct char positions').to.be.deep.equal([2]);
     });
 
     it ('220119', () => {
@@ -18,7 +18,7 @@ describe ('JMaskParser', () => {
 
       expect(info.value).to.be.string('22/01/19');
       expect(info.invalid.length, 'No invalid chars').to.be.equal(0);
-      expect(info.map, 'Correct char positions').to.be.deep.equal({2: 1, 5: 1});
+      expect(info.map, 'Correct char positions').to.be.deep.equal([2, 5]);
     });
 
     it ('2a0119', () => {
@@ -33,7 +33,7 @@ describe ('JMaskParser', () => {
       ]);
       expect(info.invalid[0].position, 'Correct position of invalid char').to.be.equal(1);
       expect(info.invalid[0].char, 'Correct value of invalid char').to.be.string('a');
-      expect(info.map, 'Correct char positions').to.be.deep.equal({3: 1, 6: 1});
+      expect(info.map, 'Correct char positions').to.be.deep.equal([3, 6]);
     });
   });
 
@@ -45,7 +45,7 @@ describe ('JMaskParser', () => {
 
       expect(info.value).to.be.string('0,00');
       expect(info.invalid.length, 'No invalid chars').to.be.equal(0);
-      expect(info.map, 'Correct char positions').to.be.deep.equal({1: 1});
+      expect(info.map, 'Correct char positions').to.be.deep.equal([1]);
     });
 
     it ('0.00', () => {
@@ -60,7 +60,7 @@ describe ('JMaskParser', () => {
       ]);
       expect(info.invalid[0].position, 'Correct position of invalid char').to.be.equal(1);
       expect(info.invalid[0].char, 'Correct value of invalid char').to.be.string('.');
-      expect(info.map, 'Correct char positions').to.be.deep.equal({1: 1});
+      expect(info.map, 'Correct char positions').to.be.deep.equal([1]);
     });
 
     it ('0,00', () => {
@@ -68,7 +68,7 @@ describe ('JMaskParser', () => {
 
       expect(info.value).to.be.string('0,00');
       expect(info.invalid.length, 'No invalid chars').to.be.equal(0);
-      expect(info.map, 'Correct char positions').to.be.deep.equal({1: 1});
+      expect(info.map, 'Correct char positions').to.be.deep.equal([1]);
     });
 
     it ('99999999,00', () => {
@@ -76,7 +76,7 @@ describe ('JMaskParser', () => {
 
       expect(info.value).to.be.string('99.999.999,00');
       expect(info.invalid.length, 'No invalid chars').to.be.equal(0);
-      expect(info.map, 'Correct char positions').to.be.deep.equal({4: 1, 6: 1, 10: 1});
+      expect(info.map, 'Correct char positions').to.be.deep.equal([4, 6, 10]);
     });
   });
 
@@ -88,7 +88,7 @@ describe ('JMaskParser', () => {
 
       expect(info.value).to.be.string('+7-905');
       expect(info.invalid.length, 'No invalid chars').to.be.equal(0);
-      expect(info.map, 'Correct char positions').to.be.deep.equal({0: 1, 1: 1, 2: 1});
+      expect(info.map, 'Correct char positions').to.be.deep.equal([0, 1, 2]);
     });
   });
 });

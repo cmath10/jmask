@@ -1,8 +1,8 @@
 import JMaskBuffer from './jmask-buffer';
 import JMaskConveyor from './jmask-conveyor';
-import { translations as defaultTranslations } from './jmask-defaults';
+import * as DEFAULTS from './jmask-defaults';
 
-class JmaskParser {
+export default class JmaskParser {
   /**
    * @param {string} mask
    * @param {Object} [options]
@@ -12,7 +12,7 @@ class JmaskParser {
 
     this.mask = mask;
     this.reverse = options.reverse || false;
-    this.translations = Object.assign({}, options.translations || {}, defaultTranslations);
+    this.translations = Object.assign({}, options.translations || {}, DEFAULTS.translations);
 
     this.invalid = [];
   }
@@ -97,28 +97,13 @@ class JmaskParser {
       buffer.push(lastMaskChar);
     }
 
+    const diff = buffer.reverse ? buffer.length - value.length : 0;
+    const positions = charPositions.map(p => p + diff);
+
     return {
       value: buffer.toString(),
-      map: this.mapCharPositions(value, buffer, charPositions),
+      map: buffer.reverse ? positions.reverse() : positions,
       invalid,
     };
   }
-
-  /**
-   * @param {string} value
-   * @param {JMaskBuffer} buffer
-   * @param charPositions
-   */
-  mapCharPositions (value, buffer, charPositions) {
-    const diff = buffer.reverse ? buffer.length - value.length : 0;
-    const map = {};
-
-    charPositions.forEach(position => {
-      map[position + diff] = 1;
-    });
-
-    return map;
-  }
 }
-
-export default JmaskParser;
