@@ -68,6 +68,7 @@ RUN useradd -m -U -s /bin/bash hostuser
 RUN curl -sL https://deb.nodesource.com/setup_8.x | bash - \
     && apt-get install -y nodejs
 
+RUN npm install -g npm-check
 RUN npm install -g karma-cli
 
 WORKDIR /var/www/jmask
