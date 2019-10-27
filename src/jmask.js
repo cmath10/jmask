@@ -37,6 +37,8 @@ class Jmask {
 
     this.inputEventName = DEFAULTS.useInputEvent ? 'input' : 'keyup';
 
+    this.value = this.getMasked();
+
     this.handlers = {
       blur: event => this.onBlur(event),
       change: event => this.onChange(event),
