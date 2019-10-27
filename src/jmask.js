@@ -60,63 +60,75 @@ class Jmask {
       return this.caret;
     }
 
-    let position = this.caret;
+    const position = this.caret;
+    const positionOld = this.caretPosition;
 
-    let caretPositionOld = this.caretPosition;
-    let maskCharsBeforeCaret = 0;
-    let maskCharsAfterCaret = 0;
-    let maskCharsBeforeCaretAll = 0;
-    let maskCharsBeforeCaretAllOld = 0;
-    let i;
-
-    for (i = position; i < newValue.length; i++) {
-      if (!this.maskCharPositionMap[i]) {
-        break;
-      }
-
-      maskCharsAfterCaret++;
-    }
-
-    for (i = position - 1; i >= 0; i--) {
-      if (!this.maskCharPositionMap[i]) {
-        break;
-      }
-
-      maskCharsBeforeCaret++;
-    }
-
-    for (i = position - 1; i >= 0; i--) {
-      if (this.maskCharPositionMap[i]) {
-        maskCharsBeforeCaretAll++;
-      }
-    }
-
-    for (i = caretPositionOld - 1; i >= 0; i--) {
-      if (this.maskCharPositionMap[i]) {
-        maskCharsBeforeCaretAllOld++;
-      }
-    }
+    const before = this.maskCharsBeforeCaret(position);
+    const after = this.maskCharsAfterCaret(newValue, position);
+    const delta = this.maskCharsBeforeCaretAll(position) - this.maskCharsBeforeCaretAll(positionOld);
 
     // if the cursor is at the end keep it there
     if (position > oldValue.length) {
-      position = newValue.length * 10;
-    } else if (caretPositionOld >= position && caretPositionOld !== oldValue.length) {
+      return newValue.length * 10;
+    }
+
+    if (position <= positionOld && positionOld !== oldValue.length) {
       if (!this.maskCharPositionMapOld[position]) {
-        let caretPos = position;
+        const calculated = position + delta - before;
 
-        position -= maskCharsBeforeCaretAllOld - maskCharsBeforeCaretAll;
-        position -= maskCharsBeforeCaret;
-
-        if (this.maskCharPositionMap[position]) {
-          position = caretPos;
+        if (!this.maskCharPositionMap[calculated]) {
+          return calculated;
         }
       }
-    } else if (position > caretPositionOld) {
-      position += maskCharsBeforeCaretAll - maskCharsBeforeCaretAllOld;
-      position += maskCharsAfterCaret;
+
+      return position;
+    }
+
+    if (position > positionOld) {
+      return position + delta + after;
     }
 
     return position;
+  }
+
+  maskCharsBeforeCaret (position) {
+    let count = 0;
+
+    for (let i = position - 1; i >= 0; i--) {
+      if (!this.maskCharPositionMap[i]) {
+        break;
+      }
+
+      count++;
+    }
+
+    return count;
+  }
+
+  maskCharsBeforeCaretAll (position) {
+    let count = 0;
+
+    for (let i = position - 1; i >= 0; i--) {
+      if (this.maskCharPositionMap[i]) {
+        count++;
+      }
+    }
+
+    return count;
+  }
+
+  maskCharsAfterCaret (value, position) {
+    let count = 0;
+
+    for (let i = position; i < value.length; i++) {
+      if (!this.maskCharPositionMap[i]) {
+        break;
+      }
+
+      count++;
+    }
+
+    return count;
   }
 
   getClean () {
