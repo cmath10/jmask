@@ -14,7 +14,7 @@ module.exports = function (config) {
       dir: path.resolve(__dirname, 'coverage'),
       reporters: [
         {type: 'lcov', subdir: '.'},
-        {type: 'text-summary'}
+        {type: 'text-summary'},
       ],
     },
     customLaunchers: {
@@ -23,8 +23,8 @@ module.exports = function (config) {
         flags: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
-        ]
-      }
+        ],
+      },
     },
     exclude: [],
     files: [
