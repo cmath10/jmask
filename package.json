@@ -1,6 +1,6 @@
 {
   "name": "@cmath10/jmask",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "description": "Pure JavaScript mask",
   "main": "src/jmask.js",
   "scripts": {
@@ -15,6 +15,9 @@
   ],
   "author": "Zaytzev.Kirill@yandex.ru",
   "license": "MIT",
+  "engines" : {
+    "node" : ">=8.16.0"
+  },
   "devDependencies": {
     "@babel/core": "^7.6.4",
     "@babel/preset-env": "^7.6.3",
