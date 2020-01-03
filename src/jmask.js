@@ -62,35 +62,34 @@ class Jmask {
       return this.caret;
     }
 
-    const position = this.caret;
-    const positionOld = this.caretPosition;
+    const newPosition = this.caret;
+    const oldPosition = this.caretPosition;
 
-    const before = this.maskCharsBeforeCaret(position);
-    const after = this.maskCharsAfterCaret(newValue, position);
-    const delta = this.maskCharsBeforeCaretAll(position) - this.maskCharsBeforeCaretAll(positionOld);
+    const before = this.maskCharsBeforeCaret(newPosition);
+    const after = this.maskCharsAfterCaret(newValue, newPosition);
+    const delta = this.maskCharsBeforeCaretAll(newPosition) - this.maskCharsBeforeCaretAll(oldPosition);
 
-    // if the cursor is at the end keep it there
-    if (position > oldValue.length) {
+    if (newPosition > oldValue.length) { // if the cursor is at the end keep it there
       return newValue.length * 10;
     }
 
-    if (position <= positionOld && positionOld !== oldValue.length) {
-      if (!this.maskCharPositionMapOld.includes(position)) {
-        const calculated = position + delta - before;
+    if (newPosition <= oldPosition && oldPosition !== oldValue.length) {
+      if (!this.maskCharPositionMapOld.includes(newPosition)) {
+        const calculated = newPosition + delta - before;
 
         if (!this.maskCharPositionMap.includes(calculated)) {
           return calculated;
         }
       }
 
-      return position;
+      return newPosition;
     }
 
-    if (position > positionOld) {
-      return position + delta + after;
+    if (newPosition > oldPosition) {
+      return newPosition + delta + after;
     }
 
-    return position;
+    return newPosition;
   }
 
   maskCharsBeforeCaret (position) {

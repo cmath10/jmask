@@ -2,8 +2,10 @@
   "name": "@cmath10/jmask",
   "version": "0.0.0",
   "description": "Pure JavaScript mask",
-  "main": "src/jmask.js",
+  "main": "dist/jmask.js",
+  "module": "src/jmask.js",
   "scripts": {
+    "build": "webpack",
     "build:dev": "webpack --config sandbox/webpack.config.js --progress --display-error-details",
     "lint": "eslint src/** tests/**",
     "lint:fix": "eslint --fix src/** tests/**",
@@ -11,12 +13,13 @@
     "test:capture": "cross-env BABEL_ENV=test karma start"
   },
   "keywords": [
-    "mask"
+    "mask",
+    "no-jquery"
   ],
   "author": "Zaytzev.Kirill@yandex.ru",
   "license": "MIT",
-  "engines" : {
-    "node" : ">=8.16.0"
+  "engines": {
+    "node": ">=8.16.0"
   },
   "devDependencies": {
     "@babel/core": "^7.6.4",
@@ -45,6 +48,7 @@
     "mocha": "^6.2.2",
     "puppeteer": "^1.19.0",
     "sinon": "^7.5.0",
+    "terser-webpack-plugin": "^2.3.1",
     "webpack": "^4.41.2",
     "webpack-cli": "^3.3.9"
   },
