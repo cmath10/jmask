@@ -34,7 +34,12 @@ After webpack finishes its job, open in browser [sandbox/index.html](sandbox/ind
 
 ## Docker
 
-Build image (if it is not built yet) & run container:
+Build image (if it is not built yet):
+```bash
+$ make docker-build
+```
+ 
+Run container:
 ```bash
 $ bash console.sh
 ```
