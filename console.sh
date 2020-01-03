@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-RUNNING_CONTAINER_ID="$(docker ps -qf "name=jmask_node")"
+RUNNING_CONTAINER_ID="$(docker ps -qf "ancestor=jmask-node")"
 
 if [[ -z "${RUNNING_CONTAINER_ID}" ]]
 then

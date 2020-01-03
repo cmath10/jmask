@@ -1,8 +1,7 @@
 version: "3.2"
 services:
   node:
-    build:
-      context: ./docker
+    image: jmask-node
     environment:
       UID: ${uid}
       GID: ${gid}
@@ -11,7 +10,6 @@ services:
     ports:
       - "${port_node}:8080"
       - "${port_karma}:9876"
-    container_name: jmask-env
     volumes:
       - type: bind
         source: .
