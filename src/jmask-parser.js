@@ -13,14 +13,12 @@ export default class JmaskParser {
     this.mask = mask;
     this.reverse = options.reverse || false;
     this.translations = Object.assign({}, options.translations || {}, DEFAULTS.translations);
-
-    this.invalid = [];
   }
 
   /**
    * @param {string} value
    * @param {boolean} [skipMaskChars]
-   * @returns {{buffer: *, map}}
+   * @returns {{invalid: *, value: *, map: (*)}}
    */
   parse (value, skipMaskChars) {
     const buffer = new JMaskBuffer(this.reverse);
