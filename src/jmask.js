@@ -43,12 +43,12 @@ const calculateCaretPosition = (prevState, currState) => {
   const oldValue = prevState.value;
   const newValue = currState.value;
 
-  if (oldValue === newValue) {
-    return this.caret;
-  }
-
   const oldPosition = prevState.caretPosition;
   const newPosition = currState.caretPosition;
+
+  if (oldValue === newValue) {
+    return newPosition;
+  }
 
   if (newPosition > oldValue.length) { // if the cursor is at the end keep it there
     return newValue.length * 10;
@@ -183,14 +183,12 @@ class Jmask {
   }
 
   calculateCaretPosition () {
-    const value = this.getMasked();
-
     return calculateCaretPosition({
       value: this.maskPreviousValue,
       caretPosition: this.caretPosition,
       maskCharMap: this.maskCharPositionMapOld,
     }, {
-      value,
+      value: this.getMasked(),
       caretPosition: this.caret,
       maskCharMap: this.maskCharPositionMap,
     });
