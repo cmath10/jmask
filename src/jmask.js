@@ -11,7 +11,7 @@ const maskCharsBeforeCaret = (maskCharsMap, caretPosition) => {
   let count = 0;
 
   for (let i = caretPosition - 1; i >= 0; i--) {
-    if (!inArray(maskCharsMap, i)) {
+    if (!inArray(i, maskCharsMap)) {
       break;
     }
 
@@ -25,7 +25,7 @@ const maskCharsAfterCaret = (maskCharsMap, caretPosition, value) => {
   let count = 0;
 
   for (let i = caretPosition; i < value.length; i++) {
-    if (!inArray(maskCharsMap, i)) {
+    if (!inArray(i, maskCharsMap)) {
       break;
     }
 
