@@ -5,6 +5,80 @@ import JMaskRegex from './jmask-regex';
 
 const KEY_STROKE_COMPENSATION = 10;
 
+const inArray = (value, arr) => arr.indexOf(value) !== -1;
+
+const maskCharsBeforeCaret = (maskCharsMap, caretPosition) => {
+  let count = 0;
+
+  for (let i = caretPosition - 1; i >= 0; i--) {
+    if (!inArray(maskCharsMap, i)) {
+      break;
+    }
+
+    count++;
+  }
+
+  return count;
+};
+
+const maskCharsAfterCaret = (maskCharsMap, caretPosition, value) => {
+  let count = 0;
+
+  for (let i = caretPosition; i < value.length; i++) {
+    if (!inArray(maskCharsMap, i)) {
+      break;
+    }
+
+    count++;
+  }
+
+  return count;
+};
+
+const maskCharsBeforeCaretAll = (maskCharsMap, caretPosition) => {
+  return maskCharsMap.filter(p => p < caretPosition).length;
+};
+
+const calculateCaretPosition = (prevState, currState) => {
+  const oldValue = prevState.value;
+  const newValue = currState.value;
+
+  if (oldValue === newValue) {
+    return this.caret;
+  }
+
+  const oldPosition = prevState.caretPosition;
+  const newPosition = currState.caretPosition;
+
+  if (newPosition > oldValue.length) { // if the cursor is at the end keep it there
+    return newValue.length * 10;
+  }
+
+  const map = currState.maskCharMap;
+
+  const before = maskCharsBeforeCaret(map, newPosition);
+  const after = maskCharsAfterCaret(map, newPosition, newValue);
+  const delta = maskCharsBeforeCaretAll(map, newPosition) - maskCharsBeforeCaretAll(map, oldPosition);
+
+  if (newPosition <= oldPosition && oldPosition !== oldValue.length) {
+    if (!inArray(newPosition, prevState.maskCharMap)) {
+      const calculated = newPosition + delta - before;
+
+      if (!inArray(calculated, map)) {
+        return calculated;
+      }
+    }
+
+    return newPosition;
+  }
+
+  if (newPosition > oldPosition) {
+    return newPosition + delta + after;
+  }
+
+  return newPosition;
+};
+
 class Jmask {
   /**
    * @param {HTMLElement} el
@@ -17,7 +91,6 @@ class Jmask {
     this.el = el;
     this.mask = mask;
     this.options = options;
-    this.clearIfNotMatch = options.clearIfNotMatch || false;
     this.translations = Object.assign({}, options.translations || {}, DEFAULTS.translations);
     this.keysExcluded = options.keysExcluded || DEFAULTS.keysExcluded;
 
@@ -29,11 +102,11 @@ class Jmask {
     this.maskCharPositionMapOld = [];
     this.keyCode = undefined;
     this.maskPreviousValue = '';
+    this.regex = new JMaskRegex(mask, options.translations);
     this.parser = new JmaskParser(mask, {
       reverse: options.reverse || false,
       translations: this.translations,
     });
-    this.regex = new JMaskRegex(mask, options.translations);
 
     this.inputEventName = DEFAULTS.useInputEvent ? 'input' : 'keyup';
 
@@ -54,159 +127,31 @@ class Jmask {
     this.el.addEventListener(this.inputEventName, this.handlers.input);
   }
 
-  calculateCaretPosition () {
-    const oldValue = this.maskPreviousValue;
-    const newValue = this.getMasked();
-
-    if (oldValue === newValue) {
-      return this.caret;
+  get value () {
+    if (this.el instanceof HTMLInputElement) {
+      return this.el.value;
     }
 
-    const newPosition = this.caret;
-    const oldPosition = this.caretPosition;
+    return this.el.innerText;
+  }
 
-    const before = this.maskCharsBeforeCaret(newPosition);
-    const after = this.maskCharsAfterCaret(newValue, newPosition);
-    const delta = this.maskCharsBeforeCaretAll(newPosition) - this.maskCharsBeforeCaretAll(oldPosition);
-
-    if (newPosition > oldValue.length) { // if the cursor is at the end keep it there
-      return newValue.length * 10;
+  set value (value) {
+    if (this.value === value) {
+      return;
     }
 
-    if (newPosition <= oldPosition && oldPosition !== oldValue.length) {
-      if (!this.maskCharPositionMapOld.includes(newPosition)) {
-        const calculated = newPosition + delta - before;
-
-        if (!this.maskCharPositionMap.includes(calculated)) {
-          return calculated;
-        }
-      }
-
-      return newPosition;
+    if (this.el instanceof HTMLInputElement) {
+      this.el.value = value;
+    } else {
+      this.el.innerText = value;
     }
-
-    if (newPosition > oldPosition) {
-      return newPosition + delta + after;
-    }
-
-    return newPosition;
-  }
-
-  maskCharsBeforeCaret (position) {
-    let count = 0;
-
-    for (let i = position - 1; i >= 0; i--) {
-      if (!this.maskCharPositionMap.includes(i)) {
-        break;
-      }
-
-      count++;
-    }
-
-    return count;
-  }
-
-  maskCharsBeforeCaretAll (position) {
-    return this.maskCharPositionMap.filter(p => p < position).length;
-  }
-
-  maskCharsAfterCaret (value, position) {
-    let count = 0;
-
-    for (let i = position; i < value.length; i++) {
-      if (!this.maskCharPositionMap.includes(i)) {
-        break;
-      }
-
-      count++;
-    }
-
-    return count;
-  }
-
-  getClean () {
-    return this.getMasked(true);
-  }
-
-  /**
-   * Method applies mask to value val
-   * @param skipMaskChars
-   * @returns {string}
-   */
-  getMasked (skipMaskChars) {
-    const {value, map, invalid} = this.parser.parse(this.value, skipMaskChars);
-
-    this.invalid = invalid;
-    this.maskCharPositionMap = map;
-
-    return value;
-  }
-
-  onBlur () {
-    if (this.oldValue !== this.value && !this.changed) {
-      const event = document.createEvent('HTMLEvents');
-
-      event.initEvent('change', false, true);
-
-      this.el.dispatchEvent(event);
-    }
-
-    this.changed = false;
-  }
-
-  onFocusOut () {
-    if (this.clearIfNotMatch && !this.regex.test(this.value)) {
-      this.value = '';
-    }
-  }
-
-  onChange () {
-    this.changed = true;
-  }
-
-  onInput (event) {
-    event = event || window.event;
-
-    this.invalid = [];
-
-    const keyCode = this.keyCode;
-
-    if (!this.keysExcluded.includes(keyCode)) {
-      const masked = this.getMasked();
-      const caret = this.caret;
-
-      // this is a compensation to devices/browsers that don't compensate
-      // caret positioning the right way
-      setTimeout(() => {
-        this.caret = this.calculateCaretPosition();
-      }, KEY_STROKE_COMPENSATION);
-
-      this.value = masked;
-      this.caret = caret;
-
-      return this.callbacks(event);
-    }
-  }
-
-  /**
-   * @param {KeyboardEvent} event
-   */
-  onKeydown (event) {
-    const keyCode = event.key || event.keyCode || event.which;
-
-    this.keyCode = keyCode.toString();
-    this.maskPreviousValue = this.value;
-    this.caretPosition = this.caret;
-
-    this.maskCharPositionMapOld = this.maskCharPositionMap;
   }
 
   get caret () {
     try {
       if (document.selection && navigator.appVersion.indexOf('MSIE 10') === -1) { // IE Support
-        let range;
+        const range = document.selection.createRange();
 
-        range = document.selection.createRange();
         range.moveStart('character', -this.value.length);
 
         return range.text.length;
@@ -237,24 +182,93 @@ class Jmask {
     } catch (error) {}
   }
 
-  get value () {
-    if (this.el instanceof HTMLInputElement) {
-      return this.el.value;
-    }
+  calculateCaretPosition () {
+    const value = this.getMasked();
 
-    return this.el.innerText;
+    return calculateCaretPosition({
+      value: this.maskPreviousValue,
+      caretPosition: this.caretPosition,
+      maskCharMap: this.maskCharPositionMapOld,
+    }, {
+      value,
+      caretPosition: this.caret,
+      maskCharMap: this.maskCharPositionMap,
+    });
   }
 
-  set value (value) {
-    if (this.value === value) {
-      return;
+  getClean () {
+    const {value} = this.parser.parse(this.value, true);
+    return value;
+  }
+
+  /**
+   * @param skipMaskChars
+   * @returns {string}
+   */
+  getMasked (skipMaskChars) {
+    const {value, map, invalid} = this.parser.parse(this.value, skipMaskChars);
+
+    this.invalid = invalid;
+    this.maskCharPositionMap = map;
+
+    return value;
+  }
+
+  onInput (event) {
+    event = event || window.event;
+
+    this.invalid = [];
+
+    if (!inArray(this.keyCode, this.keysExcluded)) {
+      const masked = this.getMasked();
+      const caret = this.caret;
+
+      // this is a compensation to devices/browsers that don't compensate
+      // caret positioning the right way
+      setTimeout(() => {
+        this.caret = this.calculateCaretPosition();
+      }, KEY_STROKE_COMPENSATION);
+
+      this.value = masked;
+      this.caret = caret;
+
+      return this.callbacks(event);
+    }
+  }
+
+  onChange () {
+    this.changed = true;
+  }
+
+  onBlur () {
+    if (this.oldValue !== this.value && !this.changed) {
+      const event = document.createEvent('HTMLEvents');
+
+      event.initEvent('change', false, true);
+
+      this.el.dispatchEvent(event);
     }
 
-    if (this.el instanceof HTMLInputElement) {
-      this.el.value = value;
-    } else {
-      this.el.innerText = value;
+    this.changed = false;
+  }
+
+  onFocusOut () {
+    if (this.options.clearIfNotMatch && !this.regex.test(this.value)) {
+      this.value = '';
     }
+  }
+
+  /**
+   * @param {KeyboardEvent} event
+   */
+  onKeydown (event) {
+    const keyCode = event.key || event.keyCode || event.which;
+
+    this.keyCode = keyCode.toString();
+    this.maskPreviousValue = this.value;
+    this.caretPosition = this.caret;
+
+    this.maskCharPositionMapOld = this.maskCharPositionMap;
   }
 
   /**
