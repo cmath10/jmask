@@ -1,6 +1,6 @@
 {
   "name": "@cmath10/jmask",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Pure JavaScript mask",
   "main": "dist/jmask.umd.js",
   "module": "dist/jmask.esm.js",
