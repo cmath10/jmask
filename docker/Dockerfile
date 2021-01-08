@@ -1,7 +1,5 @@
 FROM ubuntu:16.04
 
-MAINTAINER Zaytzev.Kirill@yandex.ru
-
 RUN apt-get update \
     && apt-get install -y \
     ca-certificates \
