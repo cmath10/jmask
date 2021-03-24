@@ -1,4 +1,5 @@
 import alias from '@rollup/plugin-alias'
+import buble from '@rollup/plugin-buble'
 import commonjs from '@rollup/plugin-commonjs'
 import { terser } from 'rollup-plugin-terser'
 
@@ -13,6 +14,7 @@ export default {
     plugins: [
         alias({ entries: [{ find: /^@\/(.+)/, replacement: './$1' }] }),
         commonjs(),
+        buble(),
         terser(),
     ],
 }

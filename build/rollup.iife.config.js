@@ -1,4 +1,5 @@
 import alias from '@rollup/plugin-alias'
+import buble from '@rollup/plugin-buble'
 import commonjs from '@rollup/plugin-commonjs'
 import resolve from '@rollup/plugin-node-resolve'
 import { terser } from 'rollup-plugin-terser'
@@ -18,6 +19,7 @@ export default {
         }),
         alias({ entries: [{ find: /^@\/(.+)/, replacement: './$1' }] }),
         commonjs(),
+        buble(),
         terser(),
     ],
 }
