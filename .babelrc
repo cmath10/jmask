@@ -4,9 +4,7 @@
   ],
   "env": {
     "test": {
-      "plugins": [["istanbul", {
-        "exclude": ["tests"]
-      }]]
+      "plugins": ["@babel/plugin-transform-modules-commonjs"]
     }
   }
 }

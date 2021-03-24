@@ -1,16 +1,11 @@
-version: "3.2"
+version: "3.8"
 services:
   node:
-    image: jmask-node
+    image: node:12
     environment:
-      UID: ${uid}
-      GID: ${gid}
-      PORT_NODE: ${port_node}
-      PORT_KARMA: ${port_karma}
+      PORT_NODE: ${PORT_NODE}
     ports:
-      - "${port_node}:8080"
-      - "${port_karma}:9876"
+      - ${PORT_NODE}:8080
     volumes:
-      - type: bind
-        source: .
-        target: /var/www/jmask
+      - ./:/var/www/jmask
+    working_dir: /var/www/jmask

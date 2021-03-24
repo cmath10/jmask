@@ -1,45 +1,37 @@
 # JMask - JavaScript Mask component
 
-## Project build requirements:
-
-* NodeJS >= 8.16.x
-
-## Project setup
+## Installation
 
 ```bash
-$ npm install
+yarn add @cmath10/jmask
 ```
 
-## Tests
+or
 
-Under Chromium headless:
 ```bash
-$ npm run test
+npm i @cmath10/jmask
 ```
 
-Under concrete browser (available testing via network):
+## Development
+### Build requirements:
+
+* NodeJS >= 12.x
+
+### Setup
+
 ```bash
-$ npm run test:capture
+docker-compose run --rm node yarn install
 ```
 
-To see code coverage report, open in browser `coverage/lcov-report/index.html`
+### Tests
+```bash
+docker-compose run --rm node yarn test
+```
 
-## Visual testing
+### Visual testing
 
 ```bash
-$ npm run build:dev
+docker-compose run --rm node yarn build:dev
 ```
 
 After webpack finishes its job, open in browser [sandbox/index.html](sandbox/index.html) to test component in action.
-
-## Docker
-
-Build image (if it is not built yet):
-```bash
-$ make docker-build
-```
- 
-Run container:
-```bash
-$ bash console.sh
-```

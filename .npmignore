@@ -1,12 +1,10 @@
+.cache
+.env
+.env.dist
 .gitignore
+.idea
 .npmignore
-app.sh
 docker-compose.yml
-karma.conf.js
-/.cache
-/.idea
-/.karma-parcel
 /coverage
-/docker
 /sandbox
 /tests
