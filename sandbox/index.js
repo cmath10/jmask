@@ -25,7 +25,7 @@ import JMask from '../src/jmask';
       mask: '00r00r0000',
       options: {
         translations: {
-          'r': { pattern: /[\/]/, fallback: '/' },
+          'r': { pattern: /./, fallback: '/' },
         },
       },
     },

@@ -123,7 +123,7 @@ const __setCaret = (el, position) => {
   } catch (error) {}
 }
 
-export default class Jmask {
+export default class JMask {
   /**
    * @param {HTMLElement} el
    * @param {string} mask
