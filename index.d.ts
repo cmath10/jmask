@@ -1,8 +1,15 @@
+export interface JMask {
+    constructor (el: Element|HTMLElement|HTMLInputElement, mask: string, options: JMaskOptions),
+    getClean (): string,
+    getMasked (skipMaskChars: boolean): string,
+    destroy (): void,
+}
+
 export interface JMaskOptions {
     clearIfNotMatch?: boolean,
-    keysExcluded?: object,
+    keysExcluded?: number[],
     reverse?: boolean,
-    translations?: object,
+    translations?: Record<string, JMaskTranslation>,
 }
 
 export interface JMaskTranslation {
