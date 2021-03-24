@@ -1,6 +1,7 @@
-import JMaskBuffer from './jmask-buffer'
 import JMaskConveyor from './jmask-conveyor'
 import * as DEFAULTS from './jmask-defaults'
+
+const put = (buffer, char, reverse) => reverse ? buffer.unshift(char) : buffer.push(char)
 
 export default class JmaskParser {
   /**
@@ -21,7 +22,8 @@ export default class JmaskParser {
    * @returns {{invalid: *, value: *, map: (*)}}
    */
   parse (value, skipMaskChars) {
-    const buffer = new JMaskBuffer(this.reverse)
+    const buffer = []
+    const reverse = this.reverse
     const invalid = []
 
     const m = new JMaskConveyor(this.mask, this.reverse)
@@ -38,7 +40,7 @@ export default class JmaskParser {
 
       if (translation) {
         if (v.char.match(translation.pattern)) {
-          buffer.add(v.char)
+          put(buffer, v.char, reverse)
 
           if (translation.recursive) {
             if (resetPosition === -1) {
@@ -63,7 +65,7 @@ export default class JmaskParser {
           m.forward()
           v.back()
         } else if ('fallback' in translation) {
-          buffer.add(translation.fallback)
+          put(buffer, translation.fallback, reverse)
           m.forward()
           v.back()
         } else {
@@ -73,7 +75,7 @@ export default class JmaskParser {
         v.forward()
       } else {
         if (!skipMaskChars) {
-          buffer.add(m.char)
+          put(buffer, m.char, reverse)
         }
 
         if (v.char === m.char) {
@@ -95,12 +97,12 @@ export default class JmaskParser {
       buffer.push(lastMaskChar)
     }
 
-    const diff = buffer.reverse ? buffer.length - value.length : 0
+    const diff = reverse ? buffer.length - value.length : 0
     const positions = charPositions.map(p => p + diff)
 
     return {
-      value: buffer.toString(),
-      map: buffer.reverse ? positions.reverse() : positions,
+      value: buffer.join(''),
+      map: reverse ? positions.reverse() : positions,
       invalid,
     }
   }
