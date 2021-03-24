@@ -1,7 +1,23 @@
-import JMaskConveyor from './jmask-conveyor'
 import * as DEFAULTS from './jmask-defaults'
 
 const put = (buffer, char, reverse) => reverse ? buffer.unshift(char) : buffer.push(char)
+
+const conveyor = (value, reverse) => {
+  const _offset = reverse ? -1 : 1
+  let _position = reverse ? value.length - 1 : 0
+
+  return {
+    forward: () => { _position += _offset },
+    back: () => { _position -= _offset },
+    char: () => value.charAt(_position),
+    last: () => reverse ? 0 : value.length - 1,
+    getPosition: () => _position,
+    setPosition: position => { _position = position },
+    on: position => _position === position,
+    offset: () => _offset,
+    ended: () => reverse ? _position <= -1 : _position >= value.length,
+  }
+}
 
 export default class JmaskParser {
   /**
@@ -17,87 +33,91 @@ export default class JmaskParser {
   }
 
   /**
-   * @param {string} value
+   * @param {string} raw
    * @param {boolean} [skipMaskChars]
    * @returns {{invalid: *, value: *, map: (*)}}
    */
-  parse (value, skipMaskChars) {
+  parse (raw, skipMaskChars) {
     const buffer = []
     const reverse = this.reverse
     const invalid = []
 
-    const m = new JMaskConveyor(this.mask, this.reverse)
-    const v = new JMaskConveyor(value, this.reverse)
+    const mask = conveyor(this.mask, this.reverse)
+    const value = conveyor(raw, this.reverse)
 
-    let resetPosition = -1
+    let rewindPosition = -1
     let charCount = 0
     let charPositions = [] // Mask char positions in input string
 
     let lastUntranslated = undefined
 
-    while (!m.finished && !v.finished) {
-      let translation = this.translations[m.char]
+    while (!mask.ended() && !value.ended()) {
+      let translation = this.translations[mask.char()]
 
       if (translation) {
-        if (v.char.match(translation.pattern)) {
-          put(buffer, v.char, reverse)
+        if (value.char().match(translation.pattern)) {
+          put(buffer, value.char(), reverse)
 
           if (translation.recursive) {
-            if (resetPosition === -1) {
-              resetPosition = m.position
-            } else if (m.position === m.last && m.position !== resetPosition) {
-              m.position = resetPosition - m.offset
+            if (rewindPosition === -1) {
+              rewindPosition = mask.getPosition()
+            } else if (rewindPosition !== mask.last() && mask.on(mask.last())) {
+              mask.setPosition(rewindPosition - mask.offset())
             }
 
-            if (resetPosition === m.last) {
-              m.back()
+            if (rewindPosition === mask.last()) {
+              continue
             }
           }
 
-          m.forward()
-        } else if (v.char === lastUntranslated) {
+          mask.forward()
+        } else if (value.char() === lastUntranslated) {
           // matched the last untranslated (raw) mask character that we encountered
           // likely an insert offset the mask character from the last entry; fall
           // through and only increment v
           charCount--
           lastUntranslated = undefined
         } else if (translation.optional) {
-          m.forward()
-          v.back()
+          mask.forward()
+          value.back()
         } else if ('fallback' in translation) {
           put(buffer, translation.fallback, reverse)
-          m.forward()
-          v.back()
+          mask.forward()
+          value.back()
         } else {
-          invalid.push({position: v.position, char: v.char, pattern: translation.pattern})
+          invalid.push({
+            position: value.getPosition(),
+            char: value.char(),
+            pattern: translation.pattern,
+          })
         }
 
-        v.forward()
+        value.forward()
       } else {
         if (!skipMaskChars) {
-          put(buffer, m.char, reverse)
+          put(buffer, mask.char(), reverse)
         }
 
-        if (v.char === m.char) {
-          charPositions.push(v.position)
-          v.forward()
+        if (value.char() === mask.char()) {
+          charPositions.push(value.getPosition())
+          value.forward()
         } else {
-          lastUntranslated = m.char
-          charPositions.push(v.position + charCount)
+          lastUntranslated = mask.char()
+          charPositions.push(value.getPosition() + charCount)
           charCount++
         }
 
-        m.forward()
+        mask.forward()
       }
     }
 
-    const lastMaskChar = this.mask.charAt(m.last)
+    const lastMaskChar = this.mask.charAt(mask.last())
 
-    if (this.mask.length === value.length + 1 && !this.translations[lastMaskChar]) {
+    if (this.mask.length === raw.length + 1 && !this.translations[lastMaskChar]) {
       buffer.push(lastMaskChar)
     }
 
-    const diff = reverse ? buffer.length - value.length : 0
+    const diff = reverse ? buffer.length - raw.length : 0
     const positions = charPositions.map(p => p + diff)
 
     return {
