@@ -1,6 +1,6 @@
 import DEFAULTS from './jmask-defaults'
 
-import JmaskParser from './jmask-parser'
+import JMaskParser from './jmask-parser'
 import JMaskRegex from './jmask-regex'
 
 const KEY_STROKE_COMPENSATION = 10
@@ -79,7 +79,51 @@ const calculateCaretPosition = (prevState, currState) => {
   return newPosition
 }
 
-class Jmask {
+const __getValue = el => el instanceof HTMLInputElement ? el.value : el.innerText
+const __setValue = (el, value) => {
+  if (el instanceof HTMLInputElement) {
+    el.value = value
+  } else {
+    el.innerText = value
+  }
+}
+
+const __getCaret = (el, value) => {
+  try {
+    if (document.selection && navigator.appVersion.indexOf('MSIE 10') === -1) { // IE Support
+      const range = document.selection.createRange()
+
+      range.moveStart('character', -value.length)
+
+      return range.text.length
+    } else if (el.selectionStart || el.selectionStart === '0') {
+      return el.selectionStart
+    }
+
+    return 0
+  } catch (error) {
+    return undefined
+  }
+}
+
+const __setCaret = (el, position) => {
+  try {
+    if (document.activeElement === el) {
+      if (el.setSelectionRange) {
+        el.setSelectionRange(position, position)
+      } else { //IE
+        const range = el.createTextRange()
+
+        range.collapse(true)
+        range.moveEnd('character', position)
+        range.moveStart('character', position)
+        range.select()
+      }
+    }
+  } catch (error) {}
+}
+
+export default class Jmask {
   /**
    * @param {HTMLElement} el
    * @param {string} mask
@@ -103,7 +147,7 @@ class Jmask {
     this.keyCode = undefined
     this.maskPreviousValue = ''
     this.regex = new JMaskRegex(mask, options.translations)
-    this.parser = new JmaskParser(mask, {
+    this.parser = new JMaskParser(mask, {
       reverse: options.reverse || false,
       translations: this.translations,
     })
@@ -128,58 +172,21 @@ class Jmask {
   }
 
   get value () {
-    if (this.el instanceof HTMLInputElement) {
-      return this.el.value
-    }
-
-    return this.el.innerText
+    return __getValue(this.el)
   }
 
   set value (value) {
-    if (this.value === value) {
-      return
-    }
-
-    if (this.el instanceof HTMLInputElement) {
-      this.el.value = value
-    } else {
-      this.el.innerText = value
+    if (this.value !== value) {
+      __setValue(this.el, value)
     }
   }
 
   get caret () {
-    try {
-      if (document.selection && navigator.appVersion.indexOf('MSIE 10') === -1) { // IE Support
-        const range = document.selection.createRange()
-
-        range.moveStart('character', -this.value.length)
-
-        return range.text.length
-      } else if (this.el.selectionStart || this.el.selectionStart === '0') {
-        return this.el.selectionStart
-      }
-
-      return 0
-    } catch (error) {
-      return undefined
-    }
+    return __getCaret(this.el, this.value)
   }
 
   set caret (position) {
-    try {
-      if (document.activeElement === this.el) {
-        if (this.el.setSelectionRange) {
-          this.el.setSelectionRange(position, position)
-        } else { //IE
-          const range = this.el.createTextRange()
-
-          range.collapse(true)
-          range.moveEnd('character', position)
-          range.moveStart('character', position)
-          range.select()
-        }
-      }
-    } catch (error) {}
+    __setCaret(this.el, position)
   }
 
   calculateCaretPosition () {
@@ -195,8 +202,7 @@ class Jmask {
   }
 
   getClean () {
-    const {value} = this.parser.parse(this.value, true)
-    return value
+    return this.parser.parse(this.value, true).value
   }
 
   /**
@@ -204,7 +210,7 @@ class Jmask {
    * @returns {string}
    */
   getMasked (skipMaskChars) {
-    const {value, map, invalid} = this.parser.parse(this.value, skipMaskChars)
+    const { value, map, invalid } = this.parser.parse(this.value, skipMaskChars)
 
     this.invalid = invalid
     this.maskCharPositionMap = map
@@ -301,5 +307,3 @@ class Jmask {
     this.caret = caret
   }
 }
-
-export default Jmask
