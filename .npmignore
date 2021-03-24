@@ -5,6 +5,9 @@
 .idea
 .npmignore
 docker-compose.yml
+jest.config.ts
+Makefile
 /coverage
 /sandbox
+/src
 /tests
