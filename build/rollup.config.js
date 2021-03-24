@@ -1,6 +1,6 @@
-import alias from '@rollup/plugin-alias';
-import commonjs from '@rollup/plugin-commonjs';
-import { terser } from 'rollup-plugin-terser';
+import alias from '@rollup/plugin-alias'
+import commonjs from '@rollup/plugin-commonjs'
+import { terser } from 'rollup-plugin-terser'
 
 // noinspection JSUnusedGlobalSymbols
 export default {
@@ -15,4 +15,4 @@ export default {
         commonjs(),
         terser(),
     ],
-};
+}
