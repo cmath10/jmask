@@ -1,5 +1,5 @@
 import { expect } from 'chai'
-import createRegex from '@/jmask-regex'
+import createRegex from '@/createRegExp'
 
 const createTestRegex = mask => createRegex(mask, {
   '0': { pattern: /\d/ },

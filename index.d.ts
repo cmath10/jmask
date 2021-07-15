@@ -5,14 +5,14 @@ export interface JMask {
     destroy (): void,
 }
 
-export interface JMaskOptions {
+export type JMaskOptions = {
     clearIfNotMatch?: boolean,
     keysExcluded?: number[],
     reverse?: boolean,
     translations?: Record<string, JMaskTranslation>,
 }
 
-export interface JMaskTranslation {
+export type JMaskTranslation = {
     pattern: RegExp,
     fallback?: string,
     optional?: boolean,

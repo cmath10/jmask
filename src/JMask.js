@@ -1,5 +1,5 @@
-import JMaskParser from './jmask-parser'
-import createRegex from './jmask-regex'
+import JMaskParser from './JMaskParser'
+import createRegex from './createRegExp'
 
 const KEY_CODE_ALT = 18
 const KEY_CODE_ARROW_DOWN = 40
@@ -27,6 +27,7 @@ const KEYS_EXCLUDED_BY_DEFAULT = [
 
 const KEY_STROKE_COMPENSATION = 10
 
+/** @type {Record<string, JMaskTranslation>} */
 const TRANSLATIONS = {
   '0': { pattern: /\d/ },
   '9': { pattern: /\d/, optional: true },

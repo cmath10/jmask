@@ -17,7 +17,7 @@ const conveyor = (value, reverse) => {
   }
 }
 
-export default class JmaskParser {
+export default class JMaskParser {
   /**
    * @param {string} mask
    * @param {Record<string, JMaskTranslation>} translations

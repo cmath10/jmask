@@ -5,7 +5,7 @@ import { terser } from 'rollup-plugin-terser'
 
 // noinspection JSUnusedGlobalSymbols
 export default {
-    input: 'src/jmask.js',
+    input: 'src/JMask.js',
     output: [{
         name: 'JMask',
         exports: 'default',

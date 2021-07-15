@@ -1,5 +1,5 @@
 import { expect } from 'chai'
-import JMaskParser from '../src/jmask-parser'
+import JMaskParser from '@/JMaskParser'
 
 const createParser = (mask, reverse = false) => new JMaskParser(mask, {
   '0': { pattern: /\d/ },

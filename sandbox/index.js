@@ -1,4 +1,4 @@
-import JMask from '@/jmask'
+import JMask from '@/JMask'
 
 (() => {
   const masks = [
