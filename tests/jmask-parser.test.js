@@ -1,6 +1,14 @@
 import { expect } from 'chai'
 import JMaskParser from '../src/jmask-parser'
 
+const createParser = (mask, reverse = false) => new JMaskParser(mask, {
+  '0': { pattern: /\d/ },
+  '9': { pattern: /\d/, optional: true },
+  '#': { pattern: /\d/, recursive: true },
+  'A': { pattern: /[a-zA-Z0-9]/ },
+  'S': { pattern: /[a-zA-Z]/ },
+}, reverse)
+
 const expectValue = ({ value }, expected) => expect(value).to.be.string(expected)
 const expectMap = ({ map }, expected) => expect(map, 'Correct char positions').to.be.deep.equal(expected)
 
@@ -12,7 +20,7 @@ const expectAllCharsValid = (info, { value, map }) => {
 
 describe ('JMaskParser', () => {
   describe ('Dates: 00/00/0000', () => {
-    const parser = new JMaskParser('00/00/0000')
+    const parser = createParser('00/00/0000')
 
     it ('220', () => {
       expectAllCharsValid(parser.parse('220'), { value: '22/0', map: [2] })
@@ -39,7 +47,7 @@ describe ('JMaskParser', () => {
   })
 
   describe ('IP: 099.099.099.099', () => {
-    const parser = new JMaskParser('099.099.099.099')
+    const parser = createParser('099.099.099.099')
 
     it ('2552552550', () => {
       expectAllCharsValid(parser.parse('2552552550'), { value: '255.255.255.0', map: [3, 7, 11] })
@@ -50,8 +58,8 @@ describe ('JMaskParser', () => {
     })
   })
 
-  describe ('Money: #.##0,00', () => {
-    const parser = new JMaskParser('#.##0,00', {reverse: true})
+  describe ('money: #.##0,00', () => {
+    const parser = createParser('#.##0,00', true)
 
     it ('000', () => {
       expectAllCharsValid(parser.parse('000'), { value: '0,00', map: [1] })
@@ -82,7 +90,7 @@ describe ('JMaskParser', () => {
   })
 
   describe ('phones: +7-000-000-00-00', () => {
-    const parser = new JMaskParser('+7-000-000-00-00')
+    const parser = createParser('+7-000-000-00-00')
 
     it ('905', () => {
       expectAllCharsValid(parser.parse('905'), { value: '+7-905', map: [0, 1, 2] })

@@ -1,75 +1,40 @@
-import { translations as defaultTranslations } from './jmask-defaults'
+/**
+ * @param {string} mask
+ * @param {Record<string, JMaskTranslation>} translations
+ */
+export default (mask, translations) => {
+  const chunks = []
 
-class JMaskRegex {
-  /**
-   * @param {string} mask
-   * @param {object} [translations]
-   */
-  constructor (mask, translations) {
-    this.mask = mask
-    this.translations = Object.assign({}, translations || {}, defaultTranslations)
-  }
+  let pattern
+  let recursion
+  let regex
 
-  /**
-   * @param {string} value
-   */
-  test (value) {
-    return this.regex.test(value)
-  }
+  for (let i = 0, translation, char; i < mask.length; i++) {
+    char = mask.charAt(i)
+    translation = translations[char]
 
-  get regex () {
-    const chunks = []
+    if (translation) {
+      pattern = translation.pattern.toString().replace(/.{1}$|^.{1}/g, '')
 
-    let pattern
-    let optional
-    let recursive
-    let recursiveOptions
-    let regex
-
-    for (let i = 0, translation, char; i < this.length; i++) {
-      char = this.char(i)
-      translation = this.translations[char]
-
-      if (translation) {
-
-        pattern = translation.pattern.toString().replace(/.{1}$|^.{1}/g, '')
-        optional = translation.optional
-        recursive = translation.recursive
-
-        if (recursive) {
-          chunks.push(char)
-          recursiveOptions = {char, pattern}
-        } else {
-          chunks.push(!optional && !recursive ? pattern : (pattern + '?'))
-        }
-
+      if (translation.recursive) {
+        chunks.push(char)
+        recursion = { char, pattern }
       } else {
-        chunks.push(char.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'))
+        chunks.push(!translation.optional && !translation.recursive ? pattern : (pattern + '?'))
       }
+
+    } else {
+      chunks.push(char.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'))
     }
-
-    regex = chunks.join('')
-
-    if (recursiveOptions) {
-      regex = regex
-        .replace(new RegExp('(' + recursiveOptions.char + '(.*' + recursiveOptions.char + ')?)'), '($1)?')
-        .replace(new RegExp(recursiveOptions.char, 'g'), recursiveOptions.pattern)
-    }
-
-    return new RegExp(regex)
   }
 
-  get length () {
-    return this.mask.length
+  regex = chunks.join('')
+
+  if (recursion) {
+    regex = regex
+      .replace(new RegExp('(' + recursion.char + '(.*' + recursion.char + ')?)'), '($1)?')
+      .replace(new RegExp(recursion.char, 'g'), recursion.pattern)
   }
 
-  /**
-   * @param i
-   * @returns {string}
-   */
-  char (i) {
-    return this.mask.charAt(i)
-  }
+  return new RegExp(regex)
 }
-
-export default JMaskRegex

@@ -1,9 +1,59 @@
-import DEFAULTS from './jmask-defaults'
-
 import JMaskParser from './jmask-parser'
-import JMaskRegex from './jmask-regex'
+import createRegex from './jmask-regex'
+
+const KEY_CODE_ALT = 18
+const KEY_CODE_ARROW_DOWN = 40
+const KEY_CODE_ARROW_LEFT = 37
+const KEY_CODE_ARROW_RIGHT = 39
+const KEY_CODE_ARROW_UP = 38
+const KEY_CODE_CTRL = 17
+const KEY_CODE_HOME = 36
+const KEY_CODE_SHIFT = 16
+const KEY_CODE_TAB = 9
+const KEY_CODE_WINDOW_LEFT = 91
+
+const KEYS_EXCLUDED_BY_DEFAULT = [
+  KEY_CODE_ALT,
+  KEY_CODE_ARROW_DOWN,
+  KEY_CODE_ARROW_LEFT,
+  KEY_CODE_ARROW_RIGHT,
+  KEY_CODE_ARROW_UP,
+  KEY_CODE_CTRL,
+  KEY_CODE_HOME,
+  KEY_CODE_SHIFT,
+  KEY_CODE_TAB,
+  KEY_CODE_WINDOW_LEFT,
+]
 
 const KEY_STROKE_COMPENSATION = 10
+
+const TRANSLATIONS = {
+  '0': { pattern: /\d/ },
+  '9': { pattern: /\d/, optional: true },
+  '#': { pattern: /\d/, recursive: true },
+  'A': { pattern: /[a-zA-Z0-9]/ },
+  'S': { pattern: /[a-zA-Z]/ },
+}
+
+const eventSupported = function (event) {
+  let el = document.createElement('div')
+  let supported
+
+  event = 'on' + event
+  supported = event in el
+
+  if (!supported) {
+    el.setAttribute(event, 'return;')
+    supported = typeof el[event] === 'function'
+  }
+
+  el = null
+
+  return supported
+}
+
+const inputEventAvailable = !/Chrome\/[2-4][0-9]|SamsungBrowser/.test(window.navigator.userAgent) && eventSupported('input')
+const inputEventName = inputEventAvailable ? 'input' : 'keyup'
 
 const inArray = (value, arr) => arr.indexOf(value) !== -1
 
@@ -39,13 +89,10 @@ const maskCharsBeforeCaretAll = (maskCharsMap, caretPosition) => {
   return maskCharsMap.filter(p => p < caretPosition).length
 }
 
-const calculateCaretPosition = (prevState, currState) => {
-  const oldValue = prevState.value
-  const newValue = currState.value
-
-  const oldPosition = prevState.caretPosition
-  const newPosition = currState.caretPosition
-
+const calculateCaretPosition = (
+  [oldValue, oldPosition, oldMap],
+  [newValue, newPosition, newMap]
+) => {
   if (oldValue === newValue) {
     return newPosition
   }
@@ -54,17 +101,15 @@ const calculateCaretPosition = (prevState, currState) => {
     return newValue.length * 10
   }
 
-  const map = currState.maskCharMap
-
-  const before = maskCharsBeforeCaret(map, newPosition)
-  const after = maskCharsAfterCaret(map, newPosition, newValue)
-  const delta = maskCharsBeforeCaretAll(map, newPosition) - maskCharsBeforeCaretAll(map, oldPosition)
+  const before = maskCharsBeforeCaret(newMap, newPosition)
+  const after = maskCharsAfterCaret(newMap, newPosition, newValue)
+  const delta = maskCharsBeforeCaretAll(newMap, newPosition) - maskCharsBeforeCaretAll(newMap, oldPosition)
 
   if (newPosition <= oldPosition && oldPosition !== oldValue.length) {
-    if (!inArray(newPosition, prevState.maskCharMap)) {
+    if (!inArray(newPosition, oldMap)) {
       const calculated = newPosition + delta - before
 
-      if (!inArray(calculated, map)) {
+      if (!inArray(calculated, newMap)) {
         return calculated
       }
     }
@@ -132,178 +177,146 @@ export default class JMask {
   constructor (el, mask, options) {
     options = options || {}
 
-    this.el = el
     this.mask = mask
-    this.options = options
-    this.translations = Object.assign({}, options.translations || {}, DEFAULTS.translations)
-    this.keysExcluded = options.keysExcluded || DEFAULTS.keysExcluded
 
-    this.oldValue = ''
-    this.caretPosition = 0
-    this.changed = false
-    this.invalid = []
-    this.maskCharPositionMap = []
-    this.maskCharPositionMapOld = []
-    this.keyCode = undefined
-    this.maskPreviousValue = ''
-    this.regex = new JMaskRegex(mask, options.translations)
-    this.parser = new JMaskParser(mask, {
-      reverse: options.reverse || false,
-      translations: this.translations,
-    })
+    let invalid = []
 
-    this.inputEventName = DEFAULTS.useInputEvent ? 'input' : 'keyup'
+    let prevKeyCode = ''
+    let prevValue = ''
+    let prevMasked = ''
+    let prevPosition = 0
+    let prevPositionMap = []
 
-    this.value = this.getMasked()
+    let currPositionMap = []
 
-    this.handlers = {
-      blur: event => this.onBlur(event),
-      change: event => this.onChange(event),
-      focusout: event => this.onFocusOut(event),
-      input: event => this.onInput(event),
-      keydown: event => this.onKeydown(event),
-    }
+    let nativeChangeEventWasEmitted = false
 
-    this.el.addEventListener('blur', this.handlers.blur)
-    this.el.addEventListener('change', this.handlers.change)
-    this.el.addEventListener('focusout', this.handlers.focusout)
-    this.el.addEventListener('keydown', this.handlers.keydown)
-    this.el.addEventListener(this.inputEventName, this.handlers.input)
-  }
+    const keysExcluded = options.keysExcluded || KEYS_EXCLUDED_BY_DEFAULT
 
-  get value () {
-    return __getValue(this.el)
-  }
+    /** @type {Record<string, JMaskTranslation>} */
+    const translations = Object.assign({}, options.translations || {}, TRANSLATIONS)
 
-  set value (value) {
-    if (this.value !== value) {
-      __setValue(this.el, value)
-    }
-  }
+    const regex = createRegex(this.mask, translations)
+    const parser = new JMaskParser(this.mask, translations, options.reverse)
 
-  get caret () {
-    return __getCaret(this.el, this.value)
-  }
-
-  set caret (position) {
-    __setCaret(this.el, position)
-  }
-
-  calculateCaretPosition () {
-    return calculateCaretPosition({
-      value: this.maskPreviousValue,
-      caretPosition: this.caretPosition,
-      maskCharMap: this.maskCharPositionMapOld,
-    }, {
-      value: this.getMasked(),
-      caretPosition: this.caret,
-      maskCharMap: this.maskCharPositionMap,
-    })
-  }
-
-  getClean () {
-    return this.parser.parse(this.value, true).value
-  }
-
-  /**
-   * @param skipMaskChars
-   * @returns {string}
-   */
-  getMasked (skipMaskChars) {
-    const { value, map, invalid } = this.parser.parse(this.value, skipMaskChars)
-
-    this.invalid = invalid
-    this.maskCharPositionMap = map
-
-    return value
-  }
-
-  onInput (event) {
-    event = event || window.event
-
-    this.invalid = []
-
-    if (!inArray(this.keyCode, this.keysExcluded)) {
-      const masked = this.getMasked()
-      const caret = this.caret
-
-      // this is a compensation to devices/browsers that don't compensate
-      // caret positioning the right way
-      setTimeout(() => {
-        this.caret = this.calculateCaretPosition()
-      }, KEY_STROKE_COMPENSATION)
-
-      this.value = masked
-      this.caret = caret
-
-      return this.callbacks(event)
-    }
-  }
-
-  onChange () {
-    this.changed = true
-  }
-
-  onBlur () {
-    if (this.oldValue !== this.value && !this.changed) {
-      const event = document.createEvent('HTMLEvents')
-
-      event.initEvent('change', false, true)
-
-      this.el.dispatchEvent(event)
-    }
-
-    this.changed = false
-  }
-
-  onFocusOut () {
-    if (this.options.clearIfNotMatch && !this.regex.test(this.value)) {
-      this.value = ''
-    }
-  }
-
-  /**
-   * @param {KeyboardEvent} event
-   */
-  onKeydown (event) {
-    const keyCode = event.key || event.keyCode || event.which
-
-    this.keyCode = keyCode.toString()
-    this.maskPreviousValue = this.value
-    this.caretPosition = this.caret
-
-    this.maskCharPositionMapOld = this.maskCharPositionMap
-  }
-
-  /**
-   * Custom event handlers
-   * @param event
-   */
-  callbacks (event) {
-    const changed = this.value !== this.oldValue
-    const defaultArgs = [this.value, event, this.el, this.options]
-
-    const callback = (name, criteria, args) => {
-      if (typeof this.options[name] === 'function' && criteria) {
-        this.options[name].apply(this, args)
+    const getValue = () => __getValue(el)
+    const setValue = value => {
+      if (__getValue(el) !== value) {
+        __setValue(el, value)
       }
     }
 
-    callback('onChange', changed === true, defaultArgs)
-    callback('onComplete', this.value.length === this.mask.length, defaultArgs)
-    callback('onInvalid', this.invalid.length > 0, [this.value, event, this.el, this.invalid, this.options])
-  }
+    const getCaret = () => __getCaret(el, __getValue(el))
+    const setCaret = position => __setCaret(el, position)
 
-  destroy () {
-    this.el.removeEventListener('blur', this.handlers.blur)
-    this.el.removeEventListener('change', this.handlers.change)
-    this.el.removeEventListener('focusout', this.handlers.focusout)
-    this.el.removeEventListener('keydown', this.handlers.keydown)
-    this.el.removeEventListener(this.inputEventName, this.handlers.input)
+    this.getClean = () => parser.parse(getValue(), true).value
 
-    const caret = this.caret
+    /**
+     * @param {boolean} [skipMaskChars]
+     * @returns {string}
+     */
+    this.getMasked = skipMaskChars => {
+      const { value, map, invalid: i } = parser.parse(getValue(), skipMaskChars)
 
-    this.value = this.getClean()
-    this.caret = caret
+      invalid = i
+      currPositionMap = map
+
+      return value
+    }
+
+    setValue(this.getMasked())
+
+    const invokeCustomHandlers = event => {
+      const value = getValue()
+      const args = [value, event, el, options]
+      const call = (name, args, criteria) => {
+        if (typeof options[name] === 'function' && criteria) {
+          options[name](...args)
+        }
+      }
+
+      call('onChange', args, value !== prevValue)
+      call('onComplete', args, value.length === this.mask.length)
+      call('onInvalid', [value, event, el, invalid, options], invalid.length > 0)
+    }
+
+    const onBlur = () => {
+      if (prevValue !== getValue() && !nativeChangeEventWasEmitted) {
+        const event = document.createEvent('HTMLEvents')
+
+        event.initEvent('change', false, true)
+
+        el.dispatchEvent(event)
+      }
+
+      nativeChangeEventWasEmitted = false
+    }
+
+    const onChange = () => {
+      nativeChangeEventWasEmitted = true
+    }
+
+    const onFocusOut = () => {
+      if (options.clearIfNotMatch && !regex.test(getValue())) {
+        setValue('')
+      }
+    }
+
+    const onInput = event => {
+      invalid = []
+
+      if (!inArray(prevKeyCode, keysExcluded)) {
+        const masked = this.getMasked()
+        const caret = getCaret()
+
+        // this is a compensation to devices/browsers that don't compensate
+        // caret positioning the right way
+        setTimeout(() => {
+          setCaret(calculateCaretPosition(
+            [prevMasked, prevPosition, prevPositionMap],
+            [this.getMasked(), getCaret(), currPositionMap]
+          ))
+        }, KEY_STROKE_COMPENSATION)
+
+        setValue(masked)
+        setCaret(caret)
+
+        invokeCustomHandlers(event)
+      }
+    }
+
+    /**
+     * @param {KeyboardEvent} event
+     */
+    const onKeydown = event => {
+      const currKeyCode = event.key || event.keyCode || event.which
+
+      prevKeyCode = currKeyCode.toString()
+      prevMasked = getValue()
+      prevPosition = getCaret()
+      prevPositionMap = currPositionMap
+    }
+
+    const on = (eventName, handler) => el.addEventListener(eventName, handler)
+    const off = (eventName, handler) => el.removeEventListener(eventName, handler)
+
+    on('blur', onBlur)
+    on('change', onChange)
+    on('focusout', onFocusOut)
+    on('keydown', onInput)
+    on(inputEventName, onKeydown)
+
+    this.destroy = () => {
+      off('blur', onBlur)
+      off('change', onChange)
+      off('focusout', onFocusOut)
+      off('keydown', onInput)
+      off(inputEventName, onKeydown)
+
+      const caret = getCaret()
+
+      setValue(this.getClean())
+      setCaret(caret)
+    }
   }
 }

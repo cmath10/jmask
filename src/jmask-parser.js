@@ -1,5 +1,3 @@
-import * as DEFAULTS from './jmask-defaults'
-
 const put = (buffer, char, reverse) => reverse ? buffer.unshift(char) : buffer.push(char)
 
 const conveyor = (value, reverse) => {
@@ -22,14 +20,13 @@ const conveyor = (value, reverse) => {
 export default class JmaskParser {
   /**
    * @param {string} mask
-   * @param {Object} [options]
+   * @param {Record<string, JMaskTranslation>} translations
+   * @param {boolean} [reverse]
    */
-  constructor (mask, options) {
-    options = options || {}
-
+  constructor (mask, translations, reverse) {
     this.mask = mask
-    this.reverse = options.reverse || false
-    this.translations = Object.assign({}, options.translations || {}, DEFAULTS.translations)
+    this.reverse = reverse
+    this.translations = translations
   }
 
   /**
