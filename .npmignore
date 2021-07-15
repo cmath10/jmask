@@ -1,10 +1,12 @@
 .cache
+.commitlintrc.json
 .env
 .env.dist
 .gitignore
 .idea
 .idea.config.js
 .npmignore
+.versionrc.json
 docker-compose.yml
 jest.config.ts
 Makefile
