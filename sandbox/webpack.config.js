@@ -44,4 +44,10 @@ module.exports = {
     env: true,
     modules: false,
   },
+
+  resolve: {
+    alias: {
+      '@': '../src',
+    },
+  },
 }

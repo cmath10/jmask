@@ -3,6 +3,7 @@
 .env.dist
 .gitignore
 .idea
+.idea.config.js
 .npmignore
 docker-compose.yml
 jest.config.ts
