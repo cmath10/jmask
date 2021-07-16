@@ -134,6 +134,12 @@ const __setValue = (el, value) => {
   }
 }
 
+/**
+ * @param {Element|HTMLElement|HTMLInputElement} el
+ * @param {string} value
+ * @return {number|undefined}
+ * @private
+ */
 const __getCaret = (el, value) => {
   try {
     if (document.selection && navigator.appVersion.indexOf('MSIE 10') === -1) { // IE Support
@@ -152,6 +158,11 @@ const __getCaret = (el, value) => {
   }
 }
 
+/**
+ * @param {Element|HTMLElement|HTMLInputElement} el
+ * @param {number} position
+ * @private
+ */
 const __setCaret = (el, position) => {
   try {
     if (document.activeElement === el) {
@@ -171,7 +182,7 @@ const __setCaret = (el, position) => {
 
 export default class JMask {
   /**
-   * @param {HTMLElement} el
+   * @param {Element|HTMLElement|HTMLInputElement} el
    * @param {string} mask
    * @param {JMaskOptions} [options]
    */
