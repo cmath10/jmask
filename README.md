@@ -76,8 +76,8 @@ Here the key is a character to translate and value is a translation config. Conf
 * `pattern` - `RegExp` - pattern to restrict characters (allows entering only matched characters), required;
 * `optional` - `bool` - if set, this character will be allowed to skip, defaults to `false`;
 * `recursive` - `bool` - allows repeatable input, defaults to `false`;
-* `fallback` - `string` - replacement, if entered character doesn't match the pattern, the mask component will try
-  to use this fallback to match, defaults to `undefined`;
+* `fallback` - `string` - replacement, if entered character doesn't match the pattern and fallback id defined, component
+  will use its value in masked string, defaults to `undefined`;
 
 ## Development
 ### Build requirements:
