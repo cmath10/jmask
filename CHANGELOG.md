@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.2.0](https://github.com/cmath10/jmask/compare/v0.1.3...v0.2.0) (2024-05-22)
+
+
+### ⚠ BREAKING CHANGES
+
+* Major overhaul. Code reworked completely onto typescript, replaced bundler, test runner, type definitions, minimal node version is v18.
+
+### Features
+
+* Major overhaul. Code reworked completely onto typescript, replaced bundler, test runner, type definitions, minimal node version is v18. ([1300ba5](https://github.com/cmath10/jmask/commit/1300ba59cacc075a2082d366f3ae20821019a1c4))
+
 ### [0.1.3](https://github.com/cmath10/jmask/compare/v0.1.2...v0.1.3) (2021-07-15)
 
 
