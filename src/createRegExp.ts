@@ -1,20 +1,17 @@
-/**
- * @param {string} mask
- * @param {Record<string, JMaskTranslation>} translations
- */
-export default (mask, translations) => {
+import type { Descriptor } from '@/types'
+
+export default (mask: string, descriptors: Record<string, Descriptor>) => {
   const chunks = []
 
-  let pattern
-  let recursion
-  let regex
+  let pattern = ''
+  let recursion: { char: string, pattern: string } | null = null
 
   for (let i = 0, translation, char; i < mask.length; i++) {
     char = mask.charAt(i)
-    translation = translations[char]
+    translation = descriptors[char]
 
     if (translation) {
-      pattern = translation.pattern.toString().replace(/.{1}$|^.{1}/g, '')
+      pattern = String(translation.pattern).replace(/.$|^./g, '')
 
       if (translation.recursive) {
         chunks.push(char)
@@ -22,13 +19,12 @@ export default (mask, translations) => {
       } else {
         chunks.push(!translation.optional && !translation.recursive ? pattern : (pattern + '?'))
       }
-
     } else {
-      chunks.push(char.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'))
+      chunks.push(char.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&'))
     }
   }
 
-  regex = chunks.join('')
+  let regex = chunks.join('')
 
   if (recursion) {
     regex = regex

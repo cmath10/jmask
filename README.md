@@ -36,20 +36,21 @@ JMask constructor arguments:
       according the specified mask, defaults to `false`;
     * `reverse` - `boolean` - if `true`, mask accounting starts with the last characters, which makes it convenient to
       enter, for example, financial values, defaults to `false`;
-    * `keysExcluded` - `number[]` - an array of keycodes that will be excluded from accounting, needed for non-character
+    * `exclude` - `string[]` - an array of keys that will be excluded from accounting, needed for non-character
       keys so that they can be used as usual; by default excluded:
         * `alt` (both, left & right);
+        * `backspace`
         * `ctrl` (both, left & right);
         * `home`;
         * `shift` (both, left & right);
         * `tab`;
         * `window` (left);
         * arrows;
-    * `translations` - `object` - custom mask character definitions.
+    * `descriptors` - `object` - custom mask character definitions.
     
-### Translations
+### Descriptors
 
-By default, JMask uses translations:
+By default, JMask uses descriptors:
 
 * `0` - for digits [0-9], required, if `0` present in a mask, will reject any characters until a digit is entered;
 * `9` - for digits [0-9], optional, if `9` present in a mask, digit could be skipped;
@@ -82,23 +83,21 @@ Here the key is a character to translate and value is a translation config. Conf
 ## Development
 ### Build requirements:
 
-* NodeJS >= 12.x
+* NodeJS >= 18.x
 
 ### Setup
 
 ```bash
-docker-compose run --rm node yarn install
+yarn install
 ```
 
 ### Tests
 ```bash
-docker-compose run --rm node yarn test
+yarn test
 ```
 
 ### Visual testing
 
 ```bash
-docker-compose run --rm node yarn build:dev
+yarn sandbox:serve
 ```
-
-After webpack finishes its job, open in browser [sandbox/index.html](sandbox/index.html) to test component in action.
