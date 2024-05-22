@@ -1,11 +1,22 @@
-version: "3.8"
 services:
   node:
-    image: node:12
-    environment:
-      PORT_NODE: ${PORT_NODE}
-    ports:
-      - ${PORT_NODE}:8080
+    image: node:20
+    user: node
     volumes:
       - ./:/var/www/jmask
     working_dir: /var/www/jmask
+
+  sandbox:
+    image: node:20
+    user: node
+    volumes:
+      - ./:/var/www/jmask
+    working_dir: /var/www/jmask
+    command: 'yarn sandbox:serve'
+    labels:
+      traefik.port: 5173
+      traefik.enable: 'true'
+      traefik.http.routers.jmask-sandbox.rule: 'HostRegexp(`sandbox.jmask.{[^.]+}`)'
+      traefik.http.routers.jmask-sandbox.priority: 1
+      traefik.http.routers.jmask-sandbox.service: jmask-sandbox
+      traefik.http.services.jmask-sandbox.loadbalancer.server.port: '5173'

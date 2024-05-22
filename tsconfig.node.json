@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "shims-*.d.ts",
+    "sandbox/**/*.ts",
+    "src/**/*.js",
+    "src/**/*.ts",
+    "tests/**/*.ts",
+    "vite.config.common.ts",
+    "vite.config.ts"
+  ]
+}
