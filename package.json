@@ -53,5 +53,8 @@
   },
   "bugs": {
     "url": "https://github.com/cmath10/jmask/issues"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
