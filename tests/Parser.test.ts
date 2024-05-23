@@ -50,4 +50,35 @@ describe('Parser', () => {
     expect(parsed.map).toEqual(expected.map)
     expect(parsed.invalid).toEqual(expected.invalid)
   })
+
+  test('fallback', () => {
+    const parser = new Parser('00f00f0000', {
+      0: { pattern: /\d/ },
+      f: { pattern: /\//, fallback: '/' },
+    })
+
+    const parsed1 = parser.parse('01a012024')
+
+    expect(parsed1.value).toEqual('01/12/4')
+    expect(parsed1.map).toEqual([])
+    expect(parsed1.invalid).toEqual([])
+
+    const parsed2 = parser.parse('01a01a2024')
+
+    expect(parsed2.value).toEqual('01/12/4')
+    expect(parsed2.map).toEqual([])
+    expect(parsed2.invalid).toEqual([expect.objectContaining({ position: 5, char: 'a' })])
+
+    const parsed3 = parser.parse('01/01a2024')
+
+    expect(parsed3.value).toEqual('01/01/024')
+    expect(parsed3.map).toEqual([])
+    expect(parsed3.invalid).toEqual([])
+
+    const parsed4 = parser.parse('01/01aa2024')
+
+    expect(parsed4.value).toEqual('01/01/2024')
+    expect(parsed4.map).toEqual([])
+    expect(parsed4.invalid).toEqual([])
+  })
 })
