@@ -170,3 +170,11 @@ export default class JMask {
     }
   }
 }
+
+export type ChangeEvent<O extends Options = Options> = CustomEvent<[string, InputEvent | KeyboardEvent, O]>
+export type CompleteEvent<O extends Options = Options> = CustomEvent<[string, InputEvent | KeyboardEvent, O]>
+
+export type {
+  Descriptor,
+  Options,
+}
