@@ -9,6 +9,14 @@ import createRegExp from '@/createRegExp'
 
 import { CONTROLS } from '@/keys'
 
+export type ChangeEvent<O extends Options = Options> = CustomEvent<[string, InputEvent | KeyboardEvent, O]>
+export type CompleteEvent<O extends Options = Options> = CustomEvent<[string, InputEvent | KeyboardEvent, O]>
+
+export type {
+  Descriptor,
+  Options,
+}
+
 const DESCRIPTORS: Record<string, Descriptor> = {
   '0': { pattern: /\d/ },
   '9': { pattern: /\d/, optional: true },
@@ -79,7 +87,7 @@ export default class JMask {
 
     const onChange = () => changeEmitted = true
     const onFocusOut = () => {
-      if (this._clearIfNotMatch && !this._regex.test(this.value)) {
+      if (this._clearIfNotMatch && !this.test(this.value)) {
         this.value = ''
       }
     }
@@ -160,7 +168,7 @@ export default class JMask {
           this._el.dispatchEvent(new CustomEvent('jmask:change', { detail }))
         }
 
-        if (this._regex.test(value)) {
+        if (this.test(value)) {
           this._el.dispatchEvent(new CustomEvent('jmask:complete', { detail }))
         }
       } else {
@@ -169,12 +177,8 @@ export default class JMask {
       }
     }
   }
-}
 
-export type ChangeEvent<O extends Options = Options> = CustomEvent<[string, InputEvent | KeyboardEvent, O]>
-export type CompleteEvent<O extends Options = Options> = CustomEvent<[string, InputEvent | KeyboardEvent, O]>
-
-export type {
-  Descriptor,
-  Options,
+  test(value: string) {
+    return this._regex.test(value)
+  }
 }
