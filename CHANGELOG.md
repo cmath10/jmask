@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.2](https://github.com/cmath10/jmask/compare/v0.2.1...v0.2.2) (2024-05-23)
+
+
+### Features
+
+* Added types for custom events dispatched by mask, exposed types Descriptor, Options ([8bebcb3](https://github.com/cmath10/jmask/commit/8bebcb321cb5e4705208c64d799f2b14a4b413b7))
+
 ### [0.2.1](https://github.com/cmath10/jmask/compare/v0.2.0...v0.2.1) (2024-05-22)
 
 ## [0.2.0](https://github.com/cmath10/jmask/compare/v0.1.3...v0.2.0) (2024-05-22)
