@@ -178,7 +178,7 @@ export default class JMask {
     }
   }
 
-  test(value: string) {
-    return this._regex.test(value)
+  test(value: string, partial = false) {
+    return partial ? this._parser.parse(value).invalid.length === 0 : this._regex.test(value)
   }
 }
