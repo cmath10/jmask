@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.3](https://github.com/cmath10/jmask/compare/v0.2.2...v0.2.3) (2024-05-23)
+
+
+### Features
+
+* Added test method to mask to check if some value matches mask completely ([488095b](https://github.com/cmath10/jmask/commit/488095bf7e0ade0ea8bdd31c49d2059c8b134e49))
+
 ### [0.2.2](https://github.com/cmath10/jmask/compare/v0.2.1...v0.2.2) (2024-05-23)
 
 
