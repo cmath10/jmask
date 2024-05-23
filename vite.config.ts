@@ -17,7 +17,7 @@ export default defineConfig({
       fileName: format => `jmask.${{
         es: 'mjs',
         cjs: 'cjs',
-      }[format]}`,
+      }[format as 'es' | 'cjs'] ?? 'js'}`,
     },
     minify: false,
   },
