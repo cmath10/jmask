@@ -3,7 +3,9 @@ import type {
   Options,
 } from '@/types'
 
-import Parser from '@/Parser'
+import type { Parse } from '@/parse'
+
+import { createParser } from '@/parse'
 
 import createRegExp from '@/createRegExp'
 
@@ -32,7 +34,7 @@ type MaskState<O extends Options = Options> = {
   changeEmitted: boolean
   exclude: string[]
   options: O
-  parser: Parser
+  parse: Parse
   regex: RegExp
   stored: {
     key: string
@@ -87,7 +89,7 @@ const setCaret = (el: HTMLElement, position: number) => {
 export const clean = (el: HTMLElement) => {
   const state = getState(el)
 
-  return state ? state.parser.parse(getValue(el), true).value : getValue(el)
+  return state ? state.parse(getValue(el), true).value : getValue(el)
 }
 
 export const matches = (el: HTMLElement, value: string, partial = false) => {
@@ -96,7 +98,7 @@ export const matches = (el: HTMLElement, value: string, partial = false) => {
     return false
   }
 
-  return partial ? state.parser.parse(value).invalid.length === 0 : state.regex.test(value)
+  return partial ? state.parse(value).invalid.length === 0 : state.regex.test(value)
 }
 
 export const unmask = (el: HTMLElement) => {
@@ -117,13 +119,12 @@ export const mask = <O extends Options = Options>(
   unmask(el)
 
   const descriptors = { ...DESCRIPTORS, ...(options.descriptors ?? {}) }
-  const parser = new Parser(maskPattern, descriptors, options.reverse)
   const state: MaskState<O> = {
     clearIfNotMatch: options.clearIfNotMatch ?? false,
     changeEmitted: false,
     exclude: [...(options.exclude ?? []), ...CONTROLS],
     options,
-    parser,
+    parse: createParser(maskPattern, descriptors, options.reverse),
     regex: createRegExp(maskPattern, descriptors),
     stored: {
       key: '',
@@ -133,7 +134,7 @@ export const mask = <O extends Options = Options>(
     },
   }
 
-  const parsed = parser.parse(getValue(el))
+  const parsed = state.parse(getValue(el))
 
   setValue(el, parsed.value)
   state.stored.value = getValue(el)
@@ -172,7 +173,7 @@ export const mask = <O extends Options = Options>(
       return
     }
 
-    const parsed = state.parser.parse(getValue(el))
+    const parsed = state.parse(getValue(el))
     const caret = getCaret(el)
 
     if (parsed.invalid.length === 0) {
