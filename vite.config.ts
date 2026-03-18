@@ -16,7 +16,7 @@ export default defineConfig({
     lib: {
       name: manifest.name,
       formats: ['es', 'cjs'],
-      entry: path.resolve(dirname, './src/JMask.ts'),
+      entry: path.resolve(dirname, './src/mask.ts'),
       fileName: format => `jmask.${{
         es: 'mjs',
         cjs: 'cjs',

@@ -7,9 +7,42 @@ import {
 import { screen } from '@testing-library/dom'
 import userEvent from '@testing-library/user-event'
 
-import JMask from '@/JMask'
+import {
+  clean,
+  mask,
+  matches,
+  unmask,
+} from '@/mask'
 
-describe('JMask e2e', () => {
+const applyInput = (
+  input: HTMLInputElement | HTMLTextAreaElement,
+  {
+    caret,
+    data,
+    inputType = 'insertText',
+    key,
+    value,
+  }: {
+    caret?: number
+    data?: string
+    inputType?: InputEvent['inputType']
+    key: string
+    value: string
+  }
+) => {
+  const nextCaret = caret ?? value.length
+
+  input.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }))
+  input.value = value
+  input.setSelectionRange(nextCaret, nextCaret)
+  input.dispatchEvent(new InputEvent('input', {
+    bubbles: true,
+    data,
+    inputType,
+  }))
+}
+
+describe('mask e2e', () => {
   beforeEach(() => {
     document.body.innerHTML = ''
   })
@@ -18,18 +51,20 @@ describe('JMask e2e', () => {
     document.body.innerHTML = '<input aria-label="Date" value="1205" />'
 
     const input = screen.getByLabelText<HTMLInputElement>('Date')
-    const mask = new JMask(input, '00/00')
+
+    mask(input, '00/00')
 
     expect(input.value).toBe('12/05')
-    expect(mask.clean).toBe('1205')
+    expect(clean(input)).toBe('1205')
   })
 
   test('formats user input and emits completion event', async () => {
     document.body.innerHTML = '<input aria-label="Date" />'
 
     const input = screen.getByLabelText<HTMLInputElement>('Date')
-    const mask = new JMask(input, '00/00')
     const completed: string[] = []
+
+    mask(input, '00/00')
 
     input.addEventListener('jmask:complete', (event) => {
       completed.push((event as CustomEvent<[string]>).detail[0])
@@ -38,7 +73,7 @@ describe('JMask e2e', () => {
     await userEvent.setup().type(input, '1205')
 
     expect(input.value).toBe('12/05')
-    expect(mask.clean).toBe('1205')
+    expect(clean(input)).toBe('1205')
     expect(completed).toEqual(['12/05'])
   })
 
@@ -48,7 +83,7 @@ describe('JMask e2e', () => {
     const input = screen.getByLabelText<HTMLInputElement>('Date')
     const changes: Array<[string, Event, object]> = []
 
-    new JMask(input, '00/00')
+    mask(input, '00/00')
 
     input.addEventListener('jmask:change', (event) => {
       changes.push((event as CustomEvent<[string, Event, object]>).detail)
@@ -66,7 +101,7 @@ describe('JMask e2e', () => {
     document.body.innerHTML = '<input aria-label="Date" />'
 
     const input = screen.getByLabelText<HTMLInputElement>('Date')
-    const mask = new JMask(input, '00/00')
+    const destroy = mask(input, '00/00')
     let changes = 0
 
     input.addEventListener('change', () => {
@@ -84,7 +119,7 @@ describe('JMask e2e', () => {
     input.dispatchEvent(new FocusEvent('blur', { bubbles: true }))
     expect(changes).toBe(2)
 
-    mask.destroy()
+    destroy()
   })
 
   test('clears incomplete value on focusout when clearIfNotMatch is enabled', async () => {
@@ -92,7 +127,7 @@ describe('JMask e2e', () => {
 
     const input = screen.getByLabelText<HTMLInputElement>('Date')
 
-    new JMask(input, '00/00', { clearIfNotMatch: true })
+    mask(input, '00/00', { clearIfNotMatch: true })
 
     await userEvent.setup().type(input, '12')
 
@@ -101,29 +136,45 @@ describe('JMask e2e', () => {
     expect(input.value).toBe('')
   })
 
+  test('preserves complete value on focusout when clearIfNotMatch is enabled', async () => {
+    document.body.innerHTML = '<input aria-label="Date" />'
+
+    const input = screen.getByLabelText<HTMLInputElement>('Date')
+
+    mask(input, '00/00', { clearIfNotMatch: true })
+
+    await userEvent.setup().type(input, '1205')
+
+    input.dispatchEvent(new FocusEvent('focusout', { bubbles: true }))
+
+    expect(input.value).toBe('12/05')
+  })
+
   test('supports textarea fields', async () => {
     document.body.innerHTML = '<textarea aria-label="Date"></textarea>'
 
     const input = screen.getByLabelText<HTMLTextAreaElement>('Date')
-    const mask = new JMask(input, '00/00')
+
+    mask(input, '00/00')
 
     await userEvent.setup().type(input, '1205')
 
     expect(input.value).toBe('12/05')
-    expect(mask.clean).toBe('1205')
+    expect(clean(input)).toBe('1205')
   })
 
   test('supports reverse mode for monetary masks', async () => {
     document.body.innerHTML = '<input aria-label="Amount" />'
 
     const input = screen.getByLabelText<HTMLInputElement>('Amount')
-    const mask = new JMask(input, '#.##0,00', { reverse: true })
+
+    mask(input, '#.##0,00', { reverse: true })
 
     await userEvent.setup().type(input, '1234')
 
     expect(input.value).toBe('12,34')
-    expect(mask.clean).toBe('1234')
-    expect(mask.test('12,34')).toBe(true)
+    expect(clean(input)).toBe('1234')
+    expect(matches(input, '12,34')).toBe(true)
   })
 
   test('handles paste for unmasked and masked values', async () => {
@@ -135,8 +186,8 @@ describe('JMask e2e', () => {
     const raw = screen.getByLabelText<HTMLInputElement>('Raw')
     const masked = screen.getByLabelText<HTMLInputElement>('Masked')
 
-    new JMask(raw, '00/00')
-    new JMask(masked, '00/00')
+    mask(raw, '00/00')
+    mask(masked, '00/00')
 
     const user = userEvent.setup()
 
@@ -154,8 +205,9 @@ describe('JMask e2e', () => {
     document.body.innerHTML = '<input aria-label="Date" />'
 
     const input = screen.getByLabelText<HTMLInputElement>('Date')
-    const mask = new JMask(input, '00/00')
     const changed: string[] = []
+
+    mask(input, '00/00')
 
     input.focus()
     input.value = '12'
@@ -165,59 +217,53 @@ describe('JMask e2e', () => {
       changed.push((event as CustomEvent<[string]>).detail[0])
     })
 
-    mask.prepare(new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true }))
-    input.value = '1'
-    input.setSelectionRange(1, 1)
-    mask.process(new InputEvent('input', {
-      bubbles: true,
+    applyInput(input, {
+      caret: 1,
       inputType: 'deleteContentBackward',
-    }), {})
+      key: 'Backspace',
+      value: '1',
+    })
 
     expect(input.value).toBe('1')
 
-    mask.prepare(new KeyboardEvent('keydown', { key: 'a', bubbles: true }))
-    input.value = '1a'
-    input.setSelectionRange(2, 2)
-    mask.process(new InputEvent('input', {
-      bubbles: true,
+    applyInput(input, {
+      caret: 2,
       data: 'a',
-      inputType: 'insertText',
-    }), {})
+      key: 'a',
+      value: '1a',
+    })
 
     expect(input.value).toBe('1')
     expect(input.selectionStart).toBe(1)
     expect(changed).toEqual([])
   })
 
-  test('supports non-field elements and destroy cleanup', () => {
+  test('supports non-field elements and cleanup', () => {
     const el = document.createElement('div')
+    el.contentEditable = 'true'
     document.body.appendChild(el)
 
-    const mask = new JMask(el, '00/00')
+    mask(el, '00/00')
 
-    expect(mask.caret).toBe(0)
-    mask.caret = 3
+    el.dispatchEvent(new KeyboardEvent('keydown', { key: '5', bubbles: true }))
+    el.innerText = '1205'
+    el.dispatchEvent(new KeyboardEvent('keyup', { key: '5', bubbles: true }))
 
-    mask.value = '12'
-    mask.value = '12'
-    expect(el.innerText).toBe('12')
+    expect(el.innerText).toBe('12/05')
+    expect(clean(el)).toBe('1205')
+    expect(matches(el, '12/0', true)).toBe(true)
 
-    el.innerText = '12/3'
+    unmask(el)
 
-    expect(mask.value).toBe('12/3')
-    expect(mask.clean).toBe('123')
-    expect(mask.test('12/3', true)).toBe(true)
-
-    mask.destroy()
-
-    expect(el.innerText).toBe('123')
+    expect(el.innerText).toBe('1205')
   })
 
   test('supports custom descriptors overriding built-in ones', async () => {
     document.body.innerHTML = '<input aria-label="Code" />'
 
     const input = screen.getByLabelText<HTMLInputElement>('Code')
-    const mask = new JMask(input, '0', {
+
+    mask(input, '0', {
       descriptors: {
         0: { pattern: /[A-Z]/ },
       },
@@ -226,24 +272,25 @@ describe('JMask e2e', () => {
     await userEvent.setup().type(input, 'A')
 
     expect(input.value).toBe('A')
-    expect(mask.test('A')).toBe(true)
+    expect(matches(input, 'A')).toBe(true)
   })
 
   test('does not emit change when processed value stays the same', () => {
     document.body.innerHTML = '<input aria-label="Date" />'
 
     const input = screen.getByLabelText<HTMLInputElement>('Date')
-    const mask = new JMask(input, '00/00')
     const changed: string[] = []
+
+    mask(input, '00/00')
 
     input.addEventListener('jmask:change', (event) => {
       changed.push((event as CustomEvent<[string]>).detail[0])
     })
 
-    mask.process(new InputEvent('input', {
+    input.dispatchEvent(new InputEvent('input', {
       bubbles: true,
       inputType: 'insertText',
-    }), {})
+    }))
 
     expect(changed).toEqual([])
   })
@@ -252,18 +299,17 @@ describe('JMask e2e', () => {
     document.body.innerHTML = '<input aria-label="Date" />'
 
     const input = screen.getByLabelText<HTMLInputElement>('Date')
-    const mask = new JMask(input, '00/00')
+
+    mask(input, '00/00')
 
     input.focus()
 
-    mask.prepare(new KeyboardEvent('keydown', { key: '3', bubbles: true }))
-    input.value = '12/3'
-    input.setSelectionRange(1, 1)
-    mask.process(new InputEvent('input', {
-      bubbles: true,
+    applyInput(input, {
+      caret: 1,
       data: '3',
-      inputType: 'insertText',
-    }), {})
+      key: '3',
+      value: '12/3',
+    })
 
     expect(input.selectionStart).toBe(1)
   })
@@ -272,13 +318,47 @@ describe('JMask e2e', () => {
     document.body.innerHTML = '<input aria-label="Date" />'
 
     const input = screen.getByLabelText<HTMLInputElement>('Date')
-    const mask = new JMask(input, '00/00')
+
+    mask(input, '00/00')
 
     Object.defineProperty(input, 'selectionStart', {
       configurable: true,
       get: () => null,
     })
 
-    expect(mask.caret).toBe(0)
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: '1', bubbles: true }))
+    input.dispatchEvent(new InputEvent('input', {
+      bubbles: true,
+      data: '1',
+      inputType: 'insertText',
+    }))
+
+    expect(input.value).toBe('')
+  })
+
+  test('reuses mask on the same element', async () => {
+    document.body.innerHTML = '<input aria-label="Value" />'
+
+    const input = screen.getByLabelText<HTMLInputElement>('Value')
+    const user = userEvent.setup()
+
+    mask(input, '00/00')
+    await user.type(input, '1205')
+
+    expect(input.value).toBe('12/05')
+
+    mask(input, '0000')
+
+    expect(input.value).toBe('1205')
+    expect(clean(input)).toBe('1205')
+  })
+
+  test('returns raw values for plain elements without mask state', () => {
+    const input = document.createElement('input')
+    input.value = '1205'
+
+    expect(clean(input)).toBe('1205')
+    expect(matches(input, '1205')).toBe(false)
+    expect(() => unmask(input)).not.toThrow()
   })
 })

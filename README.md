@@ -21,15 +21,19 @@ The package ships both ESM and CommonJS entry points via `exports`.
 
 Basic example
 ```javascript
-import JMask from '@cmath10/jmask'
+import { mask, unmask } from '@cmath10/jmask'
 
 // ...
 
 const el = document.querySelector('input#phone')
-const mask = new JMask(el, '+7-000-000-00-00')
+const destroy = mask(el, '+7-000-000-00-00')
+
+// later
+destroy()
+unmask(el)
 ```
 
-JMask constructor arguments:
+`mask()` arguments:
 
 * `el` - `Element` - element which will be managed by the mask component;
 * `mask` - `string` - mask to apply;
@@ -50,6 +54,8 @@ JMask constructor arguments:
         * arrows;
     * `descriptors` - `object` - custom mask character definitions.
     
+`mask()` returns a cleanup function. You can also call `unmask(el)` directly for idempotent teardown.
+
 ### Descriptors
 
 By default, JMask uses descriptors:
