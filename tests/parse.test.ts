@@ -4,15 +4,19 @@ import {
   test,
 } from 'vitest'
 
-import { createParser } from '@/parse'
+import { compile } from '@/compile'
+import {
+  createParser,
+  createRegExp,
+} from '@/parse'
 
-const parseValue = (value: string, mask: string, reverse = false) => createParser(mask, {
+const parseValue = (value: string, mask: string, reverse = false) => createParser(compile(mask, {
   '0': { pattern: /\d/ },
   '9': { pattern: /\d/, optional: true },
   '#': { pattern: /\d/, recursive: true },
   'A': { pattern: /[a-zA-Z0-9]/ },
   'S': { pattern: /[a-zA-Z]/ },
-}, reverse)(value)
+}), reverse)(value)
 
 describe('parse', () => {
   test.each([
@@ -52,10 +56,10 @@ describe('parse', () => {
   })
 
   test('fallback', () => {
-    const parse = createParser('00f00f0000', {
+    const parse = createParser(compile('00f00f0000', {
       0: { pattern: /\d/ },
       f: { pattern: /\//, fallback: '/' },
-    })
+    }))
 
     const parsed1 = parse('01a012024')
 
@@ -91,9 +95,9 @@ describe('parse', () => {
   })
 
   test('handles recursive descriptor when it is the last mask symbol', () => {
-    const parse = createParser('#', {
+    const parse = createParser(compile('#', {
       '#': { pattern: /\d/, recursive: true },
-    })
+    }))
 
     const parsed = parse('1234')
 
@@ -135,12 +139,95 @@ describe('parse', () => {
   })
 
   test('keeps static-only masks out of empty values', () => {
-    const parse = createParser('--', {})
+    const parse = createParser(compile('--', {}))
 
     const parsed = parse('')
 
     expect(parsed.value).toEqual('')
     expect(parsed.map).toEqual([])
     expect(parsed.invalid).toEqual([])
+  })
+})
+
+describe('createRegExp', () => {
+  test('dates', () => {
+    const regex = createRegExp(compile('00/00/0000', {
+      '0': { pattern: /\d/ },
+      '9': { pattern: /\d/, optional: true },
+      '#': { pattern: /\d/, recursive: true },
+      'A': { pattern: /[a-zA-Z0-9]/ },
+      'S': { pattern: /[a-zA-Z]/ },
+    }))
+
+    expect(regex.test('01/01/1970')).toBeTruthy()
+    expect(regex.test('01/**/1970')).toBeFalsy()
+  })
+
+  test('ip', () => {
+    const regex = createRegExp(compile('099.099.099.099', {
+      '0': { pattern: /\d/ },
+      '9': { pattern: /\d/, optional: true },
+      '#': { pattern: /\d/, recursive: true },
+      'A': { pattern: /[a-zA-Z0-9]/ },
+      'S': { pattern: /[a-zA-Z]/ },
+    }))
+
+    expect(regex.test('255.255.255.0')).toBeTruthy()
+    expect(regex.test('192.168.0.0')).toBeTruthy()
+    expect(regex.test('127.0.0.1')).toBeTruthy()
+  })
+
+  test('money', () => {
+    const regex = createRegExp(compile('#.##0,00', {
+      '0': { pattern: /\d/ },
+      '9': { pattern: /\d/, optional: true },
+      '#': { pattern: /\d/, recursive: true },
+      'A': { pattern: /[a-zA-Z0-9]/ },
+      'S': { pattern: /[a-zA-Z]/ },
+    }))
+
+    expect(regex.test('0,00')).toBeTruthy()
+    expect(regex.test('0,aa')).toBeFalsy()
+  })
+
+  test('numbers', () => {
+    const regex = createRegExp(compile('000000', {
+      '0': { pattern: /\d/ },
+      '9': { pattern: /\d/, optional: true },
+      '#': { pattern: /\d/, recursive: true },
+      'A': { pattern: /[a-zA-Z0-9]/ },
+      'S': { pattern: /[a-zA-Z]/ },
+    }))
+
+    expect(regex.test('12345')).toBeFalsy()
+    expect(regex.test('1234567')).toBeTruthy()
+    expect(regex.test('1234567')).toBeTruthy()
+    expect(regex.test('1.')).toBeFalsy()
+    expect(regex.test('1éáa2aaaaqwo')).toBeFalsy()
+  })
+
+  test('matches substrings instead of anchoring the whole value', () => {
+    const regex = createRegExp(compile('000000', {
+      '0': { pattern: /\d/ },
+      '9': { pattern: /\d/, optional: true },
+      '#': { pattern: /\d/, recursive: true },
+      'A': { pattern: /[a-zA-Z0-9]/ },
+      'S': { pattern: /[a-zA-Z]/ },
+    }))
+
+    expect(regex.test('abc123456xyz')).toBeTruthy()
+  })
+
+  test('phones', () => {
+    const regex = createRegExp(compile('+7-000-000-00-00', {
+      '0': { pattern: /\d/ },
+      '9': { pattern: /\d/, optional: true },
+      '#': { pattern: /\d/, recursive: true },
+      'A': { pattern: /[a-zA-Z0-9]/ },
+      'S': { pattern: /[a-zA-Z]/ },
+    }))
+
+    expect(regex.test('+7-999-999-99-99')).toBeTruthy()
+    expect(regex.test('+7-a99-bc9-99-99')).toBeFalsy()
   })
 })

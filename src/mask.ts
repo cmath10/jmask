@@ -3,11 +3,13 @@ import type {
   Options,
 } from '@/types'
 
+import { compile } from '@/compile'
 import type { Parse } from '@/parse'
 
-import { createParser } from '@/parse'
-
-import createRegExp from '@/createRegExp'
+import {
+  createParser,
+  createRegExp,
+} from '@/parse'
 
 import { CONTROLS } from '@/keys'
 
@@ -64,6 +66,15 @@ const count = <T>(entries: T[], predicate: (value: T) => boolean) => {
 
   return count
 }
+
+const prepare = (
+  value: string,
+  descriptors: Record<string, Descriptor>,
+  reverse = false
+) => (parts => ({
+  parse: createParser(parts, reverse),
+  regex: createRegExp(parts),
+}))(compile(value, descriptors))
 
 const getState = (el: HTMLElement) => (el as MaskedElement)[MASK_STATE]
 
@@ -124,8 +135,7 @@ export const mask = <O extends Options = Options>(
     changeEmitted: false,
     exclude: [...(options.exclude ?? []), ...CONTROLS],
     options,
-    parse: createParser(maskPattern, descriptors, options.reverse),
-    regex: createRegExp(maskPattern, descriptors),
+    ...prepare(maskPattern, descriptors, options.reverse),
     stored: {
       key: '',
       value: '',
@@ -157,7 +167,7 @@ export const mask = <O extends Options = Options>(
   }
 
   const onFocusOut = () => {
-    if (state.clearIfNotMatch && !matches(el, getValue(el))) {
+    if (state.clearIfNotMatch && !state.regex.test(getValue(el))) {
       setValue(el, '')
     }
   }
@@ -190,7 +200,7 @@ export const mask = <O extends Options = Options>(
         el.dispatchEvent(new CustomEvent('jmask:change', { detail }))
       }
 
-      if (matches(el, value)) {
+      if (state.regex.test(value)) {
         el.dispatchEvent(new CustomEvent('jmask:complete', { detail }))
       }
     } else {
@@ -199,18 +209,27 @@ export const mask = <O extends Options = Options>(
     }
   }
 
-  el.addEventListener('blur', onBlur)
-  el.addEventListener('change', onChange, { passive: true })
-  el.addEventListener('focusout', onFocusOut)
-  el.addEventListener('keydown', onKeyDown)
-  el.addEventListener(isField(el) ? 'input' : 'keyup', process)
+  const offs: Array<() => void> = []
+  const on = <K extends keyof HTMLElementEventMap>(
+    type: K,
+    listener: (event: HTMLElementEventMap[K]) => void,
+    options?: AddEventListenerOptions
+  ) => {
+    el.addEventListener(type, listener as EventListener, options)
+    offs.push(() => {
+      el.removeEventListener(type, listener as EventListener, options)
+    })
+  }
+
+  on('blur', onBlur)
+  on('change', onChange, { passive: true })
+  on('focusout', onFocusOut)
+  on('keydown', onKeyDown)
+  on(isField(el) ? 'input' : 'keyup', process)
 
   state.unmask = () => {
-    el.removeEventListener('blur', onBlur)
-    el.removeEventListener('change', onChange)
-    el.removeEventListener('focusout', onFocusOut)
-    el.removeEventListener('keydown', onKeyDown)
-    el.removeEventListener(isField(el) ? 'input' : 'keyup', process)
+    offs.forEach(off => off())
+    offs.length = 0
 
     const caret = getCaret(el)
 

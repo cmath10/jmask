@@ -1,105 +1,117 @@
 import type {
-  Descriptor,
   Invalid,
   Parsed,
 } from '@/types'
 
-export type Parse = (raw: string, skipMaskChars?: boolean) => Parsed
+import type {
+  Part,
+  Slot,
+} from '@/compile'
+
+import {
+  OPTIONAL,
+  REPEAT,
+  isStatic,
+} from '@/compile'
 
 const put = (buffer: string[], char: string, reverse: boolean) => reverse
   ? buffer.unshift(char)
   : buffer.push(char)
 
+export type Parse = (raw: string, skipMaskChars?: boolean) => Parsed
+
 export const parse = (
   raw: string,
-  mask: string,
-  descriptors: Record<string, Descriptor>,
+  parts: Part[],
   reverse = false,
   skipMaskChars = false
 ): Parsed => {
   const buffer: string[] = []
   const invalid: Invalid[] = []
-  const maskCharsPositions: number[] = []
+  const map: number[] = []
   const step = reverse ? -1 : 1
-  const lastMaskIndex = reverse ? 0 : mask.length - 1
+  const last = reverse ? 0 : parts.length - 1
 
-  let maskIndex = reverse ? mask.length - 1 : 0
-  let valueIndex = reverse ? raw.length - 1 : 0
-  let rewindIndex = -1
-  let staticCharCount = 0
-  let lastStaticMaskChar: string | undefined
+  let idx = reverse ? parts.length - 1 : 0
+  let value = reverse ? raw.length - 1 : 0
+  let rewind = -1
+  let extra = 0
+  let lastStatic: string | undefined
 
-  while (
-    reverse ? maskIndex >= 0 && valueIndex >= 0 : maskIndex < mask.length && valueIndex < raw.length
-  ) {
-    const maskChar = mask.charAt(maskIndex)
-    const valueChar = raw.charAt(valueIndex)
-    const descriptor = descriptors[maskChar]
+  while (reverse ? idx >= 0 && value >= 0 : idx < parts.length && value < raw.length) {
+    const part = parts[idx]
+    const char = raw.charAt(value)
 
-    if (descriptor) {
-      if (valueChar.match(descriptor.pattern)) {
-        put(buffer, valueChar, reverse)
+    if (!isStatic(part)) {
+      const pattern = part[3]
+      const flags = part[4]
+      const fallback = part[5]
 
-        if (descriptor.recursive) {
-          if (rewindIndex === -1) {
-            rewindIndex = maskIndex
-          } else if (rewindIndex !== lastMaskIndex && maskIndex === lastMaskIndex) {
-            maskIndex = rewindIndex - step
+      if (char.match(pattern)) {
+        put(buffer, char, reverse)
+
+        if (flags & REPEAT) {
+          if (rewind === -1) {
+            rewind = idx
+          } else if (rewind !== last && idx === last) {
+            idx = rewind - step
           }
 
-          if (rewindIndex === lastMaskIndex) {
-            valueIndex += step
+          if (rewind === last) {
+            value += step
             continue
           }
         }
 
-        maskIndex += step
-      } else if (valueChar === lastStaticMaskChar) {
-        staticCharCount--
-        lastStaticMaskChar = undefined
-      } else if (descriptor.optional) {
-        maskIndex += step
-        valueIndex -= step
-      } else if (descriptor.fallback) {
-        put(buffer, descriptor.fallback, reverse)
-        maskIndex += step
-        valueIndex += step
+        idx += step
+      } else if (char === lastStatic) {
+        extra--
+        lastStatic = undefined
+      } else if (flags & OPTIONAL) {
+        idx += step
+        value -= step
+      } else if (fallback) {
+        put(buffer, fallback, reverse)
+        idx += step
+        value += step
       } else {
         invalid.push({
-          position: valueIndex,
-          char: valueChar,
-          pattern: descriptor.pattern,
+          position: value,
+          char,
+          pattern,
         })
       }
 
-      valueIndex += step
+      value += step
       continue
     }
 
+    const partChar = part[1]
+
     if (!skipMaskChars) {
-      put(buffer, maskChar, reverse)
+      put(buffer, partChar, reverse)
     }
 
-    if (valueChar === maskChar) {
-      maskCharsPositions.push(valueIndex)
-      valueIndex += step
+    if (char === partChar) {
+      map.push(value)
+      value += step
     } else {
-      lastStaticMaskChar = maskChar
-      maskCharsPositions.push(valueIndex + staticCharCount)
-      staticCharCount++
+      lastStatic = partChar
+      map.push(value + extra)
+      extra++
     }
 
-    maskIndex += step
+    idx += step
   }
 
-  const lastMaskChar = mask.charAt(lastMaskIndex)
+  const tail = parts[last]
 
-  if (mask.length === raw.length + 1 && !descriptors[lastMaskChar]) {
-    buffer.push(lastMaskChar)
+  if (parts.length === raw.length + 1 && tail && isStatic(tail)) {
+    buffer.push(tail[1])
   }
 
   const diff = reverse ? buffer.length - raw.length : 0
-  const positions = maskCharsPositions.map(position => position + diff)
+  const positions = map.map(position => position + diff)
 
   return {
     value: buffer.join(''),
@@ -109,9 +121,39 @@ export const parse = (
 }
 
 export const createParser = (
-  mask: string,
-  descriptors: Record<string, Descriptor>,
+  parts: Part[],
   reverse = false
 ): Parse => {
-  return (raw, skipMaskChars = false) => parse(raw, mask, descriptors, reverse, skipMaskChars)
+  return (raw, skipMaskChars = false) => parse(raw, parts, reverse, skipMaskChars)
+}
+
+export const createRegExp = (parts: Part[]) => {
+  const chunks = []
+  let repeat: Slot | null = null
+
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i]
+
+    if (isStatic(part)) {
+      chunks.push(part[2])
+      continue
+    }
+
+    if (part[4] & REPEAT) {
+      chunks.push(part[1])
+      repeat = part
+    } else {
+      chunks.push(part[4] & OPTIONAL ? `${part[2]}?` : part[2])
+    }
+  }
+
+  let regex = chunks.join('')
+
+  if (repeat) {
+    regex = regex
+      .replace(new RegExp(`(${repeat[1]}(.*${repeat[1]})?)`), '($1)?')
+      .replace(new RegExp(repeat[1], 'g'), repeat[2])
+  }
+
+  return new RegExp(regex)
 }
