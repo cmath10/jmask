@@ -157,8 +157,8 @@ export default class JMask {
       if (parsed.invalid.length === 0) {
         this.value = parsed.value
         this.caret = caret
-        + count(parsed.map, i => i < caret)
-        - count(this._stored.map, i => i < this._stored.caret)
+          + count(parsed.map, i => i < caret)
+          - count(this._stored.map, i => i < this._stored.caret)
         this._stored.map = parsed.map
 
         const value = this.value

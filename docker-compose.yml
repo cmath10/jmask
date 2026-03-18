@@ -1,13 +1,13 @@
 services:
   node:
-    image: node:20
+    image: node:24
     user: node
     volumes:
       - ./:/var/www/jmask
     working_dir: /var/www/jmask
 
   sandbox:
-    image: node:20
+    image: node:24
     user: node
     volumes:
       - ./:/var/www/jmask

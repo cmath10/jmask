@@ -11,8 +11,9 @@ export default [
     ...pluginTs.configs.recommended
   ),
   ...pluginVue.configs['flat/recommended'],
-  stylistic.configs['recommended-flat'],
+  stylistic.configs.recommended,
   {
+    ignores: ['.idea.config.js', 'index.d.ts', '.yarn/**/*.*'],
     languageOptions: {
       globals: globals.browser,
       parserOptions: {
@@ -22,7 +23,6 @@ export default [
       },
       sourceType: 'module',
     },
-    ignores: ['.yarn/**/*.*'],
     rules: {
       '@stylistic/brace-style': ['error', '1tbs', { allowSingleLine: true }],
       '@stylistic/comma-dangle': ['error', {

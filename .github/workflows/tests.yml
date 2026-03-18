@@ -12,7 +12,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [ 18.x, 20.x ]
+        node-version: [ 20.x, 24.x ]
 
     steps:
       - name: Using branch ${{ github.ref }} for repository ${{ github.repository }}.
@@ -46,14 +46,14 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [ 18.x, 20.x ]
+        node-version: [ 20.x, 24.x ]
 
     steps:
       - name: Using branch ${{ github.ref }} for repository ${{ github.repository }}.
         uses: actions/checkout@v4
 
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
 

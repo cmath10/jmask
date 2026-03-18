@@ -3,7 +3,6 @@ import type { Descriptor } from '@/types'
 export default (mask: string, descriptors: Record<string, Descriptor>) => {
   const chunks = []
 
-  let pattern = ''
   let recursion: { char: string, pattern: string } | null = null
 
   for (let i = 0, translation, char; i < mask.length; i++) {
@@ -11,7 +10,7 @@ export default (mask: string, descriptors: Record<string, Descriptor>) => {
     translation = descriptors[char]
 
     if (translation) {
-      pattern = String(translation.pattern).replace(/.$|^./g, '')
+      const pattern = String(translation.pattern).replace(/.$|^./g, '')
 
       if (translation.recursive) {
         chunks.push(char)

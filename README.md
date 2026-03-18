@@ -83,7 +83,7 @@ Here the key is a character to translate and value is a translation config. Conf
 ## Development
 ### Build requirements:
 
-* NodeJS >= 18.x
+* NodeJS >= 20.19.x
 
 ### Setup
 
