@@ -47,6 +47,12 @@ describe('createRegExp', () => {
     expect(regex.test('1éáa2aaaaqwo')).toBeFalsy()
   })
 
+  test('matches substrings instead of anchoring the whole value', () => {
+    const regex = createTestRegex('000000')
+
+    expect(regex.test('abc123456xyz')).toBeTruthy()
+  })
+
   test('phones', () => {
     const regex = createTestRegex('+7-000-000-00-00')
 

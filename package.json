@@ -4,11 +4,26 @@
   "description": "Pure JavaScript mask",
   "license": "MIT",
   "author": "zaytsev.cmath10@gmail.com",
-  "main": "dist/jmask.cjs",
-  "module": "dist/jmask.mjs",
+  "type": "module",
   "types": "dist/jmask.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/jmask.d.ts",
+      "import": "./dist/jmask.mjs",
+      "require": "./dist/jmask.cjs",
+      "default": "./dist/jmask.mjs"
+    },
+    "./package.json": "./package.json"
+  },
   "scripts": {
     "build": "vite build",
+    "coverage": "yarn coverage:clean && yarn coverage:unit:raw && yarn coverage:e2e:raw && yarn coverage:merge",
+    "coverage:clean": "node scripts/clean-coverage.mjs",
+    "coverage:e2e": "yarn test:e2e --coverage && node scripts/copy-coverage.mjs e2e",
+    "coverage:e2e:raw": "COVERAGE_TEXT_REPORT=0 yarn test:e2e --coverage && node scripts/copy-coverage.mjs e2e",
+    "coverage:merge": "node scripts/merge-coverage.mjs",
+    "coverage:unit": "yarn test:unit --coverage && node scripts/copy-coverage.mjs unit",
+    "coverage:unit:raw": "COVERAGE_TEXT_REPORT=0 yarn test:unit --coverage && node scripts/copy-coverage.mjs unit",
     "lint": "eslint src/** tests/**",
     "lint:fix": "eslint --fix src/** tests/**",
     "release": "standard-version",
@@ -16,7 +31,10 @@
     "release:patch": "standard-version --release-as patch",
     "release:major": "standard-version --release-as major",
     "sandbox:serve": "cd ./sandbox && vite --host",
-    "test": "vitest run"
+    "test": "yarn test:unit && yarn test:e2e",
+    "test:e2e": "vitest run --config vitest.e2e.ts",
+    "test:unit": "vitest run --config vitest.config.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "keywords": [
     "mask"
@@ -26,6 +44,10 @@
     "last 2 versions"
   ],
   "devDependencies": {
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/user-event": "^14.6.1",
+    "@vitest/browser-playwright": "^4.1.0",
+    "@vitest/coverage-v8": "^4.1.0",
     "@commitlint/cli": "^20.5.0",
     "@commitlint/config-conventional": "^20.5.0",
     "@eslint/js": "^10.0.1",
@@ -34,6 +56,8 @@
     "eslint": "^10.0.3",
     "eslint-plugin-vue": "^10.8.0",
     "globals": "^17.4.0",
+    "nyc": "^18.0.0",
+    "playwright": "^1.58.2",
     "standard-version": "^9.5.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.57.1",

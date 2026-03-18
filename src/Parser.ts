@@ -84,6 +84,7 @@ export default class Parser {
             }
 
             if (rewindPosition === mask.last()) {
+              value.forward()
               continue
             }
           }

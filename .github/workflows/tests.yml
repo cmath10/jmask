@@ -1,4 +1,4 @@
-name: Tests
+name: CI
 
 on: [push, pull_request]
 
@@ -7,68 +7,50 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  eslint:
+  checks:
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [ 20.x, 24.x ]
+    timeout-minutes: 30
 
     steps:
       - name: Using branch ${{ github.ref }} for repository ${{ github.repository }}.
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
+      - name: Show Docker Compose version
+        run: docker compose version
 
-      - name: Cache dependencies
-        id: cache-deps
-        uses: actions/cache@v4
-        with:
-          path: .yarn
-          key: ${{ runner.OS }}-node-${{ matrix.node-version }}-yarn-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.OS }}-node-${{ matrix.node-version }}-yarn-
-
-      - name: Install dependencies
-        run: yarn install
+      - name: Setup project
+        uses: ./.github/actions/setup
 
       - name: Run lint
-        run: yarn lint
+        run: make lint
+
+      - name: Run typecheck
+        run: make typecheck
+
+      - name: Run build
+        run: make build
 
   tests:
-    needs: eslint
+    needs: checks
 
     timeout-minutes: 60
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [ 20.x, 24.x ]
-
     steps:
       - name: Using branch ${{ github.ref }} for repository ${{ github.repository }}.
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+      - name: Show Docker Compose version
+        run: docker compose version
+
+      - name: Setup project
+        uses: ./.github/actions/setup
+
+      - name: Run merged coverage
+        run: make coverage
+
+      - name: Upload merged coverage artifact
+        uses: actions/upload-artifact@v7
         with:
-          node-version: ${{ matrix.node-version }}
-
-      - name: Cache dependencies
-        id: cache-deps
-        uses: actions/cache@v4
-        with:
-          path: .yarn
-          key: ${{ runner.OS }}-node-${{ matrix.node-version }}-yarn-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.OS }}-node-${{ matrix.node-version }}-yarn-
-
-      - name: Install dependencies
-        run: yarn install
-
-      - name: Run tests
-        run: yarn test
-        
+          name: coverage-merged
+          path: coverage/merged

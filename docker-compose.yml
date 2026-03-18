@@ -1,14 +1,15 @@
 services:
   node:
     image: node:24
-    user: node
+    user: '${UID:-1000}:${GID:-1000}'
     volumes:
       - ./:/var/www/jmask
     working_dir: /var/www/jmask
+    network_mode: host
 
   sandbox:
     image: node:24
-    user: node
+    user: '${UID:-1000}:${GID:-1000}'
     volumes:
       - ./:/var/www/jmask
     working_dir: /var/www/jmask
@@ -20,3 +21,16 @@ services:
       traefik.http.routers.jmask-sandbox.priority: 1
       traefik.http.routers.jmask-sandbox.service: jmask-sandbox
       traefik.http.services.jmask-sandbox.loadbalancer.server.port: '5173'
+
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.58.2-noble
+    user: '${UID:-1000}:${GID:-1000}'
+    working_dir: /var/www/jmask
+    volumes:
+      - ./:/var/www/jmask
+    environment:
+      CI: 'true'
+    ipc: host
+    init: true
+    network_mode: host
+    command: 'yarn test:e2e'

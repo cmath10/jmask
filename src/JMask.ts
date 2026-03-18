@@ -57,7 +57,7 @@ export default class JMask {
   public readonly destroy: () => void
 
   constructor(el: HTMLElement, mask: string, options: Options = {}) {
-    const descriptors = { ...(options.descriptors ?? {}), ...DESCRIPTORS }
+    const descriptors = { ...DESCRIPTORS, ...(options.descriptors ?? {}) }
 
     this._el = el
     this._regex = createRegExp(mask, descriptors)

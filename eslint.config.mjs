@@ -19,7 +19,7 @@ export default [
       parserOptions: {
         extraFileExtensions: ['.vue'],
         parser: pluginTs.parser,
-        project: './tsconfig.node.json',
+        project: './tsconfig.json',
       },
       sourceType: 'module',
     },

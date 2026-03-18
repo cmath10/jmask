@@ -81,4 +81,66 @@ describe('Parser', () => {
     expect(parsed4.map).toEqual([])
     expect(parsed4.invalid).toEqual([])
   })
+
+  test('skips optional descriptors when the next character does not match', () => {
+    const parsed = parse('1a', '09')
+
+    expect(parsed.value).toEqual('1')
+    expect(parsed.map).toEqual([])
+    expect(parsed.invalid).toEqual([])
+  })
+
+  test('handles recursive descriptor when it is the last mask symbol', () => {
+    const parser = new Parser('#', {
+      '#': { pattern: /\d/, recursive: true },
+    })
+
+    const parsed = parser.parse('1234')
+
+    expect(parsed.value).toEqual('1234')
+    expect(parsed.map).toEqual([])
+    expect(parsed.invalid).toEqual([])
+  })
+
+  test('ignores static mask characters typed after the descriptor position', () => {
+    const parsed = parse('123/4', '00/00')
+
+    expect(parsed.value).toEqual('12/34')
+    expect(parsed.map).toEqual([2])
+    expect(parsed.invalid).toEqual([])
+  })
+
+  test('appends a trailing static mask character when input is shorter by one symbol', () => {
+    const parsed = parse('12', '00/')
+
+    expect(parsed.value).toEqual('12/')
+    expect(parsed.map).toEqual([])
+    expect(parsed.invalid).toEqual([])
+  })
+
+  test('parses empty input without producing invalid entries', () => {
+    const parsed = parse('', '00/00')
+
+    expect(parsed.value).toEqual('')
+    expect(parsed.map).toEqual([])
+    expect(parsed.invalid).toEqual([])
+  })
+
+  test('handles multiple optional descriptors in sequence', () => {
+    const parsed = parse('12', '099')
+
+    expect(parsed.value).toEqual('12')
+    expect(parsed.map).toEqual([])
+    expect(parsed.invalid).toEqual([])
+  })
+
+  test('keeps static-only masks out of empty values', () => {
+    const parser = new Parser('--', {})
+
+    const parsed = parser.parse('')
+
+    expect(parsed.value).toEqual('')
+    expect(parsed.map).toEqual([])
+    expect(parsed.invalid).toEqual([])
+  })
 })

@@ -1,0 +1,24 @@
+{
+  "exclude": [
+    "coverage/**",
+    "dist/**",
+    "sandbox/**",
+    "scripts/**",
+    "tests/**",
+    "eslint.config.mjs",
+    "vite.config.common.ts",
+    "vite.config.ts",
+    "vitest.config.ts",
+    "vitest.e2e.ts"
+  ],
+  "extension": [
+    ".ts"
+  ],
+  "report-dir": "coverage/merged",
+  "reporter": [
+    "text",
+    "html",
+    "json-summary"
+  ],
+  "temp-dir": ".nyc_output/merged"
+}

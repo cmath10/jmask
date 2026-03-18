@@ -3,7 +3,7 @@
     "baseUrl": "./",
     "esModuleInterop": true,
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "paths": {
       "@/*": ["./src/*"]
     },
@@ -13,7 +13,13 @@
   },
   "include": [
     "shims-*.d.ts",
+    "sandbox/**/*.ts",
     "src/**/*.ts",
-    "tests/**/*.ts"
+    "tests/**/*.ts",
+    "vite.config.common.ts",
+    "vite.config.ts",
+    "vitest.config.ts",
+    "vitest.coverage.ts",
+    "vitest.e2e.ts"
   ]
 }

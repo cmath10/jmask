@@ -15,6 +15,8 @@ or
 npm i @cmath10/jmask
 ```
 
+The package ships both ESM and CommonJS entry points via `exports`.
+
 ## Usage
 
 Basic example
@@ -94,6 +96,50 @@ yarn install
 ### Tests
 ```bash
 yarn test
+```
+
+### Typecheck
+
+```bash
+yarn typecheck
+make typecheck
+```
+
+### Coverage
+
+Run unit, E2E, and merged V8 coverage reports:
+
+```bash
+yarn coverage
+```
+
+Run only one suite:
+
+```bash
+yarn coverage:unit
+yarn coverage:e2e
+```
+
+Run the same checks inside containers via `make`:
+
+```bash
+make test
+make test-e2e
+make coverage
+```
+
+### E2E tests
+
+Run the Vitest + Playwright suite locally:
+
+```bash
+yarn test:e2e
+```
+
+Run the same suite inside containers:
+
+```bash
+make test-e2e
 ```
 
 ### Visual testing
