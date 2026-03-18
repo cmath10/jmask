@@ -33,56 +33,70 @@ export const parse = (
   const last = reverse ? 0 : parts.length - 1
 
   let idx = reverse ? parts.length - 1 : 0
-  let value = reverse ? raw.length - 1 : 0
+  let pos = reverse ? raw.length - 1 : 0
   let rewind = -1
   let extra = 0
   let lastStatic: string | undefined
 
-  while (reverse ? idx >= 0 && value >= 0 : idx < parts.length && value < raw.length) {
+  while (reverse ? idx >= 0 && pos >= 0 : idx < parts.length && pos < raw.length) {
     const part = parts[idx]
-    const char = raw.charAt(value)
+    const char = raw.charAt(pos)
 
     if (!isStatic(part)) {
       const pattern = part[3]
       const flags = part[4]
       const fallback = part[5]
+      const repeat = flags & REPEAT
 
       if (char.match(pattern)) {
         put(buffer, char, reverse)
 
-        if (flags & REPEAT) {
+        if (repeat) {
           if (rewind === -1) {
             rewind = idx
-          } else if (rewind !== last && idx === last) {
-            idx = rewind - step
           }
 
           if (rewind === last) {
-            value += step
+            pos += step
             continue
+          }
+
+          if (idx === last) {
+            idx = rewind - step
           }
         }
 
         idx += step
-      } else if (char === lastStatic) {
-        extra--
-        lastStatic = undefined
-      } else if (flags & OPTIONAL) {
-        idx += step
-        value -= step
-      } else if (fallback) {
-        put(buffer, fallback, reverse)
-        idx += step
-        value += step
-      } else {
-        invalid.push({
-          position: value,
-          char,
-          pattern,
-        })
+        pos += step
+        continue
       }
 
-      value += step
+      if (char === lastStatic) {
+        extra--
+        lastStatic = undefined
+        pos += step
+        continue
+      }
+
+      if (flags & OPTIONAL) {
+        idx += step
+        continue
+      }
+
+      if (fallback) {
+        put(buffer, fallback, reverse)
+        idx += step
+        pos += step * 2
+        continue
+      }
+
+      invalid.push({
+        position: pos,
+        char,
+        pattern,
+      })
+
+      pos += step
       continue
     }
 
@@ -93,11 +107,11 @@ export const parse = (
     }
 
     if (char === partChar) {
-      map.push(value)
-      value += step
+      map.push(pos)
+      pos += step
     } else {
       lastStatic = partChar
-      map.push(value + extra)
+      map.push(pos + extra)
       extra++
     }
 

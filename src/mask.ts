@@ -31,20 +31,33 @@ const DESCRIPTORS: Record<string, Descriptor> = {
 
 const MASK_STATE = Symbol('jmask-state')
 
+// Internal state keys are intentionally short to squeeze a bit more out of the bundle.
 type MaskState<O extends Options = Options> = {
-  clearIfNotMatch: boolean
-  changeEmitted: boolean
-  exclude: string[]
-  options: O
-  parse: Parse
-  regex: RegExp
-  stored: {
-    key: string
-    value: string
-    caret: number
-    map: number[]
+  // clearIfNotMatch
+  c: boolean
+  // changeEmitted
+  e: boolean
+  // options
+  o: O
+  // parse
+  p: Parse
+  // regex
+  r: RegExp
+  // stored
+  s: {
+    // caret
+    c: number
+    // key
+    k: string
+    // map
+    m: number[]
+    // value
+    v: string
   }
-  unmask?: () => void
+  // unmask
+  u?: () => void
+  // exclude
+  x: string[]
 }
 
 type MaskedElement = HTMLElement & {
@@ -72,8 +85,8 @@ const prepare = (
   descriptors: Record<string, Descriptor>,
   reverse = false
 ) => (parts => ({
-  parse: createParser(parts, reverse),
-  regex: createRegExp(parts),
+  p: createParser(parts, reverse),
+  r: createRegExp(parts),
 }))(compile(value, descriptors))
 
 const getState = (el: HTMLElement) => (el as MaskedElement)[MASK_STATE]
@@ -100,7 +113,7 @@ const setCaret = (el: HTMLElement, position: number) => {
 export const clean = (el: HTMLElement) => {
   const state = getState(el)
 
-  return state ? state.parse(getValue(el), true).value : getValue(el)
+  return state ? state.p(getValue(el), true).value : getValue(el)
 }
 
 export const matches = (el: HTMLElement, value: string, partial = false) => {
@@ -109,7 +122,7 @@ export const matches = (el: HTMLElement, value: string, partial = false) => {
     return false
   }
 
-  return partial ? state.parse(value).invalid.length === 0 : state.regex.test(value)
+  return partial ? state.p(value).invalid.length === 0 : state.r.test(value)
 }
 
 export const unmask = (el: HTMLElement) => {
@@ -119,7 +132,7 @@ export const unmask = (el: HTMLElement) => {
     return
   }
 
-  state.unmask?.()
+  state.u?.()
 }
 
 export const mask = <O extends Options = Options>(
@@ -131,81 +144,81 @@ export const mask = <O extends Options = Options>(
 
   const descriptors = { ...DESCRIPTORS, ...(options.descriptors ?? {}) }
   const state: MaskState<O> = {
-    clearIfNotMatch: options.clearIfNotMatch ?? false,
-    changeEmitted: false,
-    exclude: [...(options.exclude ?? []), ...CONTROLS],
-    options,
+    c: options.clearIfNotMatch ?? false,
+    e: false,
+    o: options,
     ...prepare(maskPattern, descriptors, options.reverse),
-    stored: {
-      key: '',
-      value: '',
-      caret: 0,
-      map: [],
+    s: {
+      c: 0,
+      k: '',
+      m: [],
+      v: '',
     },
+    x: [...(options.exclude ?? []), ...CONTROLS],
   }
 
-  const parsed = state.parse(getValue(el))
+  const parsed = state.p(getValue(el))
 
   setValue(el, parsed.value)
-  state.stored.value = getValue(el)
-  state.stored.caret = getCaret(el)
-  state.stored.map = parsed.map
+  state.s.v = getValue(el)
+  state.s.c = getCaret(el)
+  state.s.m = parsed.map
 
   const onBlur = () => {
-    if (state.stored.value !== getValue(el) && !state.changeEmitted) {
+    if (state.s.v !== getValue(el) && !state.e) {
       el.dispatchEvent(new Event('change', {
         bubbles: true,
         cancelable: false,
       }))
     }
 
-    state.changeEmitted = false
+    state.e = false
   }
 
   const onChange = () => {
-    state.changeEmitted = true
+    state.e = true
   }
 
   const onFocusOut = () => {
-    if (state.clearIfNotMatch && !state.regex.test(getValue(el))) {
+    if (state.c && !state.r.test(getValue(el))) {
       setValue(el, '')
     }
   }
 
   const onKeyDown = (event: KeyboardEvent) => {
-    state.stored.key = event.key
-    state.stored.value = getValue(el)
-    state.stored.caret = getCaret(el)
+    state.s.k = event.key
+    state.s.v = getValue(el)
+    state.s.c = getCaret(el)
   }
 
   const process = (event: Event) => {
-    if (state.exclude.includes(state.stored.key)) {
+    if (state.x.includes(state.s.k)) {
       return
     }
 
-    const parsed = state.parse(getValue(el))
+    const parsed = state.p(getValue(el))
     const caret = getCaret(el)
 
     if (parsed.invalid.length === 0) {
-      const offset = count(parsed.map, i => i < caret) - count(state.stored.map, i => i < state.stored.caret)
+      const offset = count(parsed.map, i => i < caret) - count(state.s.m, i => i < state.s.c)
 
       setValue(el, parsed.value)
       setCaret(el, caret + offset)
-      state.stored.map = parsed.map
+      state.s.m = parsed.map
 
       const value = getValue(el)
-      const detail: [string, InputEvent | KeyboardEvent, O] = [value, event as InputEvent | KeyboardEvent, state.options]
+      const detail: [string, InputEvent | KeyboardEvent, O] = [value, event as InputEvent | KeyboardEvent, state.o]
 
-      if (value !== state.stored.value) {
+      if (value !== state.s.v) {
         el.dispatchEvent(new CustomEvent('jmask:change', { detail }))
       }
 
-      if (state.regex.test(value)) {
+      if (state.r.test(value)) {
         el.dispatchEvent(new CustomEvent('jmask:complete', { detail }))
       }
     } else {
-      setValue(el, state.stored.value)
-      setCaret(el, state.stored.caret)
+      setValue(el, state.s.v)
+      setCaret(el, state.s.c)
     }
   }
 
@@ -227,7 +240,7 @@ export const mask = <O extends Options = Options>(
   on('keydown', onKeyDown)
   on(isField(el) ? 'input' : 'keyup', process)
 
-  state.unmask = () => {
+  state.u = () => {
     offs.forEach(off => off())
     offs.length = 0
 
@@ -240,5 +253,5 @@ export const mask = <O extends Options = Options>(
 
   ;(el as MaskedElement)[MASK_STATE] = state
 
-  return state.unmask
+  return state.u
 }
