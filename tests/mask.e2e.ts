@@ -126,14 +126,25 @@ describe('mask e2e', () => {
     document.body.innerHTML = '<input aria-label="Date" />'
 
     const input = screen.getByLabelText<HTMLInputElement>('Date')
+    const changed: string[] = []
+    let nativeChanges = 0
 
     mask(input, '00/00', { clearIfNotMatch: true })
+
+    input.addEventListener('jmask:change', (event) => {
+      changed.push((event as CustomEvent<[string]>).detail[0])
+    })
+    input.addEventListener('change', () => {
+      nativeChanges++
+    })
 
     await userEvent.setup().type(input, '12')
 
     input.dispatchEvent(new FocusEvent('focusout', { bubbles: true }))
 
     expect(input.value).toBe('')
+    expect(changed.at(-1)).toBe('')
+    expect(nativeChanges).toBe(1)
   })
 
   test('preserves complete value on focusout when clearIfNotMatch is enabled', async () => {
@@ -201,6 +212,60 @@ describe('mask e2e', () => {
     expect(masked.value).toBe('12/05')
   })
 
+  test('handles drop even if the previous key was excluded', () => {
+    document.body.innerHTML = '<input aria-label="Date" />'
+
+    const input = screen.getByLabelText<HTMLInputElement>('Date')
+
+    mask(input, '00/00')
+
+    input.focus()
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Control', bubbles: true }))
+    input.dispatchEvent(new Event('drop', { bubbles: true }))
+    input.value = '1205'
+    input.setSelectionRange(4, 4)
+    input.dispatchEvent(new InputEvent('input', {
+      bubbles: true,
+      data: '1205',
+      inputType: 'insertFromDrop',
+    }))
+
+    expect(input.value).toBe('12/05')
+  })
+
+  test('formats the final IME value on compositionend', () => {
+    document.body.innerHTML = '<input aria-label="Date" />'
+
+    const input = screen.getByLabelText<HTMLInputElement>('Date')
+    const changed: string[] = []
+
+    mask(input, '00/00')
+
+    input.addEventListener('jmask:change', (event) => {
+      changed.push((event as CustomEvent<[string]>).detail[0])
+    })
+
+    input.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }))
+    input.value = '1205'
+    input.dispatchEvent(new InputEvent('input', {
+      bubbles: true,
+      data: '1205',
+      inputType: 'insertCompositionText',
+    }))
+
+    expect(input.value).toBe('1205')
+    expect(changed).toEqual([])
+
+    input.dispatchEvent(new CompositionEvent('compositionend', {
+      bubbles: true,
+      data: '1205',
+    }))
+
+    expect(input.value).toBe('12/05')
+    expect(clean(input)).toBe('1205')
+    expect(changed).toEqual(['12/05'])
+  })
+
   test('ignores excluded keys and restores the previous value after invalid input', () => {
     document.body.innerHTML = '<input aria-label="Date" />'
 
@@ -237,6 +302,36 @@ describe('mask e2e', () => {
     expect(input.selectionStart).toBe(1)
     expect(changed).toEqual([])
   })
+
+  test.each(['ArrowLeft', 'ArrowRight', 'Tab', 'Control'])(
+    'ignores %s from the exclude list',
+    (key) => {
+      document.body.innerHTML = '<input aria-label="Date" />'
+
+      const input = screen.getByLabelText<HTMLInputElement>('Date')
+      const changed: string[] = []
+
+      mask(input, '00/00')
+
+      input.focus()
+      input.value = '12'
+      input.setSelectionRange(2, 2)
+
+      input.addEventListener('jmask:change', (event) => {
+        changed.push((event as CustomEvent<[string]>).detail[0])
+      })
+
+      applyInput(input, {
+        caret: 2,
+        data: 'a',
+        key,
+        value: '1a',
+      })
+
+      expect(input.value).toBe('1a')
+      expect(changed).toEqual([])
+    }
+  )
 
   test('supports non-field elements and cleanup', () => {
     const el = document.createElement('div')

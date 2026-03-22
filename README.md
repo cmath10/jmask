@@ -148,6 +148,16 @@ Run the same suite inside containers:
 make test-e2e
 ```
 
+## Release
+
+Run the `Release` workflow from GitHub Actions and choose the release type:
+
+```bash
+auto | patch | minor | major
+```
+
+The workflow creates the release commit, pushes the tag, runs the checks, builds the package, and publishes it to npm through Trusted Publishing without npm tokens. The trusted publisher must be configured on npm for the exact workflow filename `release.yml`.
+
 ### Visual testing
 
 ```bash

@@ -218,6 +218,20 @@ describe('createRegExp', () => {
     expect(regex.test('abc123456xyz')).toBeTruthy()
   })
 
+  test('documents the current regex contract for extra leading and trailing characters', () => {
+    const regex = createRegExp(compile('000000', {
+      '0': { pattern: /\d/ },
+      '9': { pattern: /\d/, optional: true },
+      '#': { pattern: /\d/, recursive: true },
+      'A': { pattern: /[a-zA-Z0-9]/ },
+      'S': { pattern: /[a-zA-Z]/ },
+    }))
+
+    expect(regex.test('x123456')).toBeTruthy()
+    expect(regex.test('123456x')).toBeTruthy()
+    expect(regex.test('x12345x')).toBeFalsy()
+  })
+
   test('phones', () => {
     const regex = createRegExp(compile('+7-000-000-00-00', {
       '0': { pattern: /\d/ },

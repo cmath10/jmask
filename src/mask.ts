@@ -3,8 +3,9 @@ import type {
   Options,
 } from '@/types'
 
-import { compile } from '@/compile'
 import type { Parse } from '@/parse'
+
+import { compile } from '@/compile'
 
 import {
   createParser,
@@ -13,8 +14,8 @@ import {
 
 import { CONTROLS } from '@/keys'
 
-export type ChangeEvent<O extends Options = Options> = CustomEvent<[string, InputEvent | KeyboardEvent, O]>
-export type CompleteEvent<O extends Options = Options> = CustomEvent<[string, InputEvent | KeyboardEvent, O]>
+export type ChangeEvent<O extends Options = Options> = CustomEvent<[string, Event, O]>
+export type CompleteEvent<O extends Options = Options> = CustomEvent<[string, Event, O]>
 
 export type {
   Descriptor,
@@ -37,6 +38,8 @@ type MaskState<O extends Options = Options> = {
   c: boolean
   // changeEmitted
   e: boolean
+  // composing
+  i: boolean
   // options
   o: O
   // parse
@@ -146,6 +149,7 @@ export const mask = <O extends Options = Options>(
   const state: MaskState<O> = {
     c: options.clearIfNotMatch ?? false,
     e: false,
+    i: false,
     o: options,
     ...prepare(maskPattern, descriptors, options.reverse),
     s: {
@@ -164,37 +168,20 @@ export const mask = <O extends Options = Options>(
   state.s.c = getCaret(el)
   state.s.m = parsed.map
 
-  const onBlur = () => {
-    if (state.s.v !== getValue(el) && !state.e) {
-      el.dispatchEvent(new Event('change', {
-        bubbles: true,
-        cancelable: false,
-      }))
-    }
-
-    state.e = false
-  }
-
-  const onChange = () => {
-    state.e = true
-  }
-
-  const onFocusOut = () => {
-    if (state.c && !state.r.test(getValue(el))) {
-      setValue(el, '')
-    }
-  }
-
-  const onKeyDown = (event: KeyboardEvent) => {
-    state.s.k = event.key
+  const remember = (key = '') => {
+    state.s.k = key
     state.s.v = getValue(el)
     state.s.c = getCaret(el)
   }
 
+  const sync = (value = getValue(el)) => {
+    state.s.v = value
+    state.s.c = getCaret(el)
+    state.s.m = state.p(value).map
+  }
+
   const process = (event: Event) => {
-    if (state.x.includes(state.s.k)) {
-      return
-    }
+    if (state.i || state.x.includes(state.s.k)) return
 
     const parsed = state.p(getValue(el))
     const caret = getCaret(el)
@@ -234,10 +221,49 @@ export const mask = <O extends Options = Options>(
     })
   }
 
-  on('blur', onBlur)
-  on('change', onChange, { passive: true })
-  on('focusout', onFocusOut)
-  on('keydown', onKeyDown)
+  const rememberEmpty = () => remember()
+
+  on('blur', () => {
+    if (state.s.v !== getValue(el) && !state.e) {
+      el.dispatchEvent(new Event('change', {
+        bubbles: true,
+        cancelable: false,
+      }))
+    }
+
+    state.e = false
+  })
+  on('beforeinput', rememberEmpty)
+  on('change', () => {
+    state.e = true
+  }, { passive: true })
+  on('compositionend', (event: CompositionEvent) => {
+    state.i = false
+    process(event)
+  })
+  on('compositionstart', () => {
+    state.i = true
+    remember()
+  })
+  on('drop', rememberEmpty)
+  on('focusout', (event: FocusEvent) => {
+    const value = getValue(el)
+
+    if (state.c && value && !state.r.test(value)) {
+      setValue(el, '')
+      sync('')
+
+      const detail: [string, Event, O] = ['', event, state.o]
+
+      el.dispatchEvent(new CustomEvent('jmask:change', { detail }))
+      el.dispatchEvent(new Event('change', {
+        bubbles: true,
+        cancelable: false,
+      }))
+    }
+  })
+  on('keydown', (event: KeyboardEvent) => remember(event.key))
+  on('paste', rememberEmpty)
   on(isField(el) ? 'input' : 'keyup', process)
 
   state.u = () => {
