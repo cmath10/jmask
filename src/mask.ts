@@ -50,6 +50,8 @@ type MaskState<O extends Options = Options> = {
   s: {
     // caret
     c: number
+    // selection end
+    d: number
     // key
     k: string
     // map
@@ -107,10 +109,19 @@ const setValue = (el: HTMLElement, value: string) => {
 }
 
 const getCaret = (el: HTMLElement) => isField(el) ? el.selectionStart ?? 0 : 0
+const getSelectionEnd = (el: HTMLElement) => isField(el) ? el.selectionEnd ?? getCaret(el) : getCaret(el)
 const setCaret = (el: HTMLElement, position: number) => {
   if (document.activeElement === el && isField(el)) {
     el.setSelectionRange(position, position)
   }
+}
+
+const normalizeReverseValue = (value: string) => {
+  if (!value) {
+    return ''
+  }
+
+  return value.replace(/^0+/, '') || '0'
 }
 
 export const clean = (el: HTMLElement) => {
@@ -154,6 +165,7 @@ export const mask = <O extends Options = Options>(
     ...prepare(maskPattern, descriptors, options.reverse),
     s: {
       c: 0,
+      d: 0,
       k: '',
       m: [],
       v: '',
@@ -166,24 +178,53 @@ export const mask = <O extends Options = Options>(
   setValue(el, parsed.value)
   state.s.v = getValue(el)
   state.s.c = getCaret(el)
+  state.s.d = getSelectionEnd(el)
   state.s.m = parsed.map
 
   const remember = (key = '') => {
     state.s.k = key
     state.s.v = getValue(el)
     state.s.c = getCaret(el)
+    state.s.d = getSelectionEnd(el)
   }
 
   const sync = (value = getValue(el)) => {
     state.s.v = value
     state.s.c = getCaret(el)
+    state.s.d = getSelectionEnd(el)
     state.s.m = state.p(value).map
   }
 
   const process = (event: Event) => {
     if (state.i || state.x.includes(state.s.k)) return
 
-    const parsed = state.p(getValue(el))
+    const input = event instanceof InputEvent ? event : null
+    const isReverseDelete = Boolean(
+      state.o.reverse
+      && input?.inputType
+      && input.inputType.startsWith('deleteContent')
+    )
+    const parsed = isReverseDelete
+      ? (() => {
+          const previousRaw = state.p(state.s.v, true).value
+          const canonical = normalizeReverseValue(previousRaw)
+          const leading = previousRaw.length - canonical.length
+          const rawStart = Math.max(0, state.s.c - count(state.s.m, i => i < state.s.c) - leading)
+          const rawEnd = Math.max(0, state.s.d - count(state.s.m, i => i < state.s.d) - leading)
+          const from = rawStart === rawEnd
+            ? input?.inputType === 'deleteContentForward'
+              ? rawStart
+              : Math.max(0, rawStart - 1)
+            : rawStart
+          const to = rawStart === rawEnd
+            ? input?.inputType === 'deleteContentForward'
+              ? Math.min(canonical.length, rawStart + 1)
+              : rawStart
+            : rawEnd
+
+          return state.p(canonical.slice(0, from) + canonical.slice(to))
+        })()
+      : state.p(getValue(el))
     const caret = getCaret(el)
 
     if (parsed.invalid.length === 0) {

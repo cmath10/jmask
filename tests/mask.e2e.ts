@@ -17,12 +17,14 @@ import {
 const applyInput = (
   input: HTMLInputElement | HTMLTextAreaElement,
   {
+    beforeInput = false,
     caret,
     data,
     inputType = 'insertText',
     key,
     value,
   }: {
+    beforeInput?: boolean
     caret?: number
     data?: string
     inputType?: InputEvent['inputType']
@@ -33,6 +35,13 @@ const applyInput = (
   const nextCaret = caret ?? value.length
 
   input.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }))
+  if (beforeInput) {
+    input.dispatchEvent(new InputEvent('beforeinput', {
+      bubbles: true,
+      data,
+      inputType,
+    }))
+  }
   input.value = value
   input.setSelectionRange(nextCaret, nextCaret)
   input.dispatchEvent(new InputEvent('input', {
@@ -186,6 +195,60 @@ describe('mask e2e', () => {
     expect(input.value).toBe('12,34')
     expect(clean(input)).toBe('1234')
     expect(matches(input, '12,34')).toBe(true)
+  })
+
+  test('clears a reverse-mode money value with repeated backspace', async () => {
+    document.body.innerHTML = '<input aria-label="Amount" />'
+
+    const input = screen.getByLabelText<HTMLInputElement>('Amount')
+    const user = userEvent.setup()
+
+    mask(input, '#.##0,00', { reverse: true })
+
+    await user.type(input, '1234')
+
+    expect(input.value).toBe('12,34')
+
+    applyInput(input, {
+      beforeInput: true,
+      caret: 4,
+      inputType: 'deleteContentBackward',
+      key: 'Backspace',
+      value: '12,3',
+    })
+
+    expect(input.value).toBe('1,23')
+
+    applyInput(input, {
+      beforeInput: true,
+      caret: 3,
+      inputType: 'deleteContentBackward',
+      key: 'Backspace',
+      value: '1,2',
+    })
+
+    expect(input.value).toBe('12')
+
+    applyInput(input, {
+      beforeInput: true,
+      caret: 1,
+      inputType: 'deleteContentBackward',
+      key: 'Backspace',
+      value: '1',
+    })
+
+    expect(input.value).toBe('1')
+
+    applyInput(input, {
+      beforeInput: true,
+      caret: 0,
+      inputType: 'deleteContentBackward',
+      key: 'Backspace',
+      value: '',
+    })
+
+    expect(input.value).toBe('')
+    expect(clean(input)).toBe('')
   })
 
   test('handles paste for unmasked and masked values', async () => {
