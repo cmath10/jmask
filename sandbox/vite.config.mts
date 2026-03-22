@@ -5,9 +5,18 @@ import { fileURLToPath } from 'node:url'
 import common from '../vite.config.common'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
+const allowedHosts = ['.jmask.test']
 
 export default defineConfig({
   ...common,
+
+  server: {
+    allowedHosts,
+  },
+
+  preview: {
+    allowedHosts,
+  },
 
   build: {
     rollupOptions: {
