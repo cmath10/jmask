@@ -2,7 +2,8 @@
   "compilerOptions": {
     "baseUrl": "./",
     "esModuleInterop": true,
-    "module": "esnext",
+    "lib": ["ESNext", "DOM"],
+    "module": "ESNext",
     "moduleResolution": "bundler",
     "paths": {
       "@/*": ["./src/*"]
