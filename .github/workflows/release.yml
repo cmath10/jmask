@@ -13,11 +13,16 @@ on:
           - patch
           - minor
           - major
-      npm_tag:
-        description: npm dist-tag for publication
+      prerelease:
+        description: Prerelease type
         required: true
-        default: latest
-        type: string
+        default: none
+        type: choice
+        options:
+          - none
+          - alpha
+          - beta
+          - rc
 
 permissions:
   contents: write
@@ -38,12 +43,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Validate release branch and npm tag
-        env:
-          NPM_TAG: ${{ inputs.npm_tag }}
+      - name: Ensure stable release is running from master
+        if: ${{ inputs.prerelease == 'none' }}
         run: |
-          if [ "$NPM_TAG" = "latest" ] && [ "$GITHUB_REF_NAME" != "master" ]; then
-            echo "Release to npm tag 'latest' must be started from the master branch."
+          if [ "$GITHUB_REF_NAME" != "master" ]; then
+            echo "Stable release is allowed only from master. Current ref: $GITHUB_REF_NAME"
             exit 1
           fi
 
@@ -73,6 +77,7 @@ jobs:
       - name: Run release script
         env:
           RELEASE_TYPE: ${{ inputs.release }}
+          PRERELEASE: ${{ inputs.prerelease }}
         run: |
           case "$RELEASE_TYPE" in
             auto)
@@ -93,7 +98,11 @@ jobs:
               ;;
           esac
 
-          yarn run "$RELEASE_SCRIPT"
+          if [ "$PRERELEASE" = "none" ]; then
+            yarn run "$RELEASE_SCRIPT"
+          else
+            yarn run "$RELEASE_SCRIPT" --prerelease "$PRERELEASE"
+          fi
 
       - name: Build package
         run: make build
@@ -102,6 +111,7 @@ jobs:
         run: git push origin "HEAD:${GITHUB_REF_NAME}" --follow-tags
 
       - name: Publish package to npm
-        env:
-          NPM_TAG: ${{ inputs.npm_tag }}
-        run: npm publish --tag "$NPM_TAG"
+        run: |
+          NPM_TAG=$(node -e "const semver = require('semver'); const manifest = require('./package.json'); const prerelease = semver.prerelease(manifest.version); process.stdout.write(prerelease && typeof prerelease[0] === 'string' ? prerelease[0] : 'latest')")
+
+          npm publish --tag "$NPM_TAG"

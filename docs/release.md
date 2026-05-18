@@ -6,10 +6,10 @@ Run the `Release` workflow from GitHub Actions with these inputs:
 
 ```bash
 release: auto | patch | minor | major
-npm_tag: latest | <custom dist-tag>
+prerelease: none | alpha | beta | rc
 ```
 
-If `npm_tag=latest`, the workflow must be started from the `master` branch.
+If `prerelease=none`, the workflow must be started from the `master` branch.
 
 ## What the workflow does
 
@@ -20,9 +20,10 @@ The workflow:
 * prepares the project environment via `.github/actions/setup`;
 * runs `make lint`, `make typecheck`, and `make test`;
 * runs one of `yarn release`, `yarn release:patch`, `yarn release:minor`, or `yarn release:major`;
+* passes `--prerelease alpha`, `--prerelease beta`, or `--prerelease rc` for prerelease runs;
 * builds the package with `make build`;
 * pushes the release commit and tags back to the source branch;
-* publishes the package to npm with the selected dist-tag.
+* publishes the package to npm with `latest` for stable releases or with the prerelease identifier as the dist-tag.
 
 ## npm publishing
 

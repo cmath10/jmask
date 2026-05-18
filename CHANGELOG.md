@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+All notable changes to this project will be documented in this file.
 
 ### [0.2.4](https://github.com/cmath10/jmask/compare/v0.2.3...v0.2.4) (2024-05-23)
 

@@ -14,6 +14,7 @@
 .versionrc.json
 docker-compose.yml
 eslint.config.mjs
+release.config.mjs
 Makefile
 tsconfig.json
 tsconfig.node.json
