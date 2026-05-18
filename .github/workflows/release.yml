@@ -111,6 +111,8 @@ jobs:
         run: git push origin "HEAD:${GITHUB_REF_NAME}" --follow-tags
 
       - name: Publish package to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           NPM_TAG=$(node -e "const semver = require('semver'); const manifest = require('./package.json'); const prerelease = semver.prerelease(manifest.version); process.stdout.write(prerelease && typeof prerelease[0] === 'string' ? prerelease[0] : 'latest')")
 
