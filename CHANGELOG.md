@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.3.0
+
+### ⚠ BREAKING CHANGE* Class-Based Mask API Was Replaced
+* the JMask class API was removed and replaced with the functional mask/unmask API.
+* Package Exports Were Introduced
+* package.json now declares type=module and uses exports instead of the legacy main/module entry fields.
+
+
+### Features
+
+* Input Handling And Release Flow Were Improved ([3a615fc](https://github.com/cmath10/jmask/commit/3a615fcba5ef1d99d74179ca2686a7caeecc8a3c))
+
+### Bug Fixes
+
+* Typecheck ([29eb1df](https://github.com/cmath10/jmask/commit/29eb1df9f50d924ea0abb854f418999e2134ea15))
+
 All notable changes to this project will be documented in this file.
 
 ### [0.2.4](https://github.com/cmath10/jmask/compare/v0.2.3...v0.2.4) (2024-05-23)
@@ -55,3 +71,4 @@ All notable changes to this project will be documented in this file.
 
 * babel transformations ([c9bee83](https://github.com/cmath10/jmask/commit/c9bee83a96e1359ce077865054dc70a7b539db18))
 * Reference to index.d.ts ([4e4279e](https://github.com/cmath10/jmask/commit/4e4279ee6771d0dbf5bccea8912578f406ed676f))
+
