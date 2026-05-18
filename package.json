@@ -15,6 +15,12 @@
     },
     "./package.json": "./package.json"
   },
+  "files": [
+    "CHANGELOG.md",
+    "LICENSE.md",
+    "README.md",
+    "dist"
+  ],
   "scripts": {
     "build": "vite build",
     "coverage": "yarn coverage:clean && yarn coverage:unit:raw && yarn coverage:e2e:raw && yarn coverage:merge",
